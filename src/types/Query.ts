@@ -61,12 +61,12 @@ export const Query = queryType({
             id: Number(orderId),
           },
         })
-        const user = order && await ctx.prisma.user.findOne({
+        const userResp = order && await ctx.prisma.user.findOne({
           where: {
             id: Number(order.userId),
           },
         })
-        const book = order && await ctx.prisma.book.findOne({
+        const bookResp = order && await ctx.prisma.book.findOne({
           where: {
             id: Number(order.bookId),
           },
@@ -74,8 +74,8 @@ export const Query = queryType({
 
         return {
           id: order && order.id as any,
-          book,
-          user,
+          book: bookResp && bookResp,
+          user: userResp && userResp,
           unitPrice: order && order.unitPrice as any,
           quantity: order && order.quantity as any
         }

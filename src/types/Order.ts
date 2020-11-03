@@ -10,10 +10,3 @@ export const Order = objectType({
     t.field('book', { type: 'Book' })
   },
 })
-
-export const OrderResp = objectType({
-  name: 'OrderResp',
-  definition(t) {
-    Order || null
-  },
-})

@@ -12,6 +12,8 @@ export const Book = objectType({
     t.model.ISBN()
     t.model.rating()
     // t.field('owner', { type: 'User', nullable: false })
+    t.field('category', { type: 'Category' })
+    t.field('language', { type: 'Language' })
     t.field('owner', { type: 'User' })
     t.field('user', { type: 'User' })
   },

@@ -9,15 +9,27 @@ type AuthPayload {
 
 type Book {
   author: String!
+  category: Category
   condition: String!
   description: String
   id: Int!
   ISBN: String
+  language: Language
   owner: User
   rating: Int
   status: String!
   title: String!
   user: User
+}
+
+type Category {
+  id: Int!
+  name: String!
+}
+
+type Language {
+  id: Int!
+  name: String!
 }
 
 type Mutation {
@@ -36,8 +48,6 @@ type Order {
   unitPrice: Float!
   user: User
 }
-
-type OrderResp
 
 type Query {
   filterBooks(searchString: String): [Book]
