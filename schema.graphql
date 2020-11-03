@@ -27,6 +27,14 @@ type Category {
   name: String!
 }
 
+type Checkout {
+  id: Int!
+  orders(after: OrderWhereUniqueInput, before: OrderWhereUniqueInput, first: Int, last: Int): [Order!]!
+  status: String!
+  totalPrice: Float!
+  user: User!
+}
+
 type Language {
   id: Int!
   name: String!
@@ -47,6 +55,10 @@ type Order {
   quantity: Int!
   unitPrice: Float!
   user: User
+}
+
+input OrderWhereUniqueInput {
+  id: Int
 }
 
 type Query {
