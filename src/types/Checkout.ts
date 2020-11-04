@@ -1,13 +1,14 @@
 import { objectType } from '@nexus/schema'
 
 export const Checkout = objectType({
-  name: 'Checkout',
+  name: 'checkouts',
   definition(t) {
     t.model.id()
-    t.model.status()
-    t.model.totalPrice()
+    t.model.checkout_type()
+    t.model.checkout_date()
+    t.model.return_date()
+    t.model.price()
     t.model.orders()
-    t.field('user', { type: 'User', nullable: false })
-    t.field('owner', { type: 'User', nullable: false })
+    t.model.users()
   },
 })

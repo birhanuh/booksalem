@@ -1,5 +1,6 @@
 import { floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
 import { compare, hash } from 'bcryptjs'
+import { or } from 'graphql-shield'
 import { sign } from 'jsonwebtoken'
 import { APP_SECRET, getUserId } from '../utils'
 
@@ -8,17 +9,19 @@ export const Mutation = mutationType({
     t.field('signup', {
       type: 'AuthPayload',
       args: {
-        name: stringArg(),
+        name: stringArg({ nullable: false }),
         email: stringArg({ nullable: false }),
         password: stringArg({ nullable: false }),
       },
       resolve: async (_parent, { name, email, password }, ctx) => {
         const hashedPassword = await hash(password, 10)
-        const user = await ctx.prisma.user.create({
+        const user = await ctx.prisma.users.create({
           data: {
             name,
             email,
             password: hashedPassword,
+            created_on: Date(),
+            updated_on: Date()
           },
         })
         return {
@@ -35,7 +38,7 @@ export const Mutation = mutationType({
         password: stringArg({ nullable: false }),
       },
       resolve: async (_parent, { email, password }, ctx) => {
-        const user = await ctx.prisma.user.findOne({
+        const user = await ctx.prisma.users.findOne({
           where: {
             email,
           },
@@ -55,53 +58,58 @@ export const Mutation = mutationType({
     })
 
     t.field('addBook', {
-      type: 'Book',
+      type: 'books',
       args: {
         title: stringArg({ nullable: false }),
         author: stringArg({ nullable: false }),
-        description: stringArg({ nullable: false }),
-        ISBN: stringArg({ nullable: false }),
+        description: stringArg(),
+        isbn: intArg(),
         status: stringArg({ nullable: false }),
+        language: stringArg({ nullable: false }),
         condition: stringArg({ nullable: false }),
+        price: floatArg({ nullable: false }),
+        published_date: stringArg({ nullable: false }),
+        rating: intArg(),
         categoryId: intArg({ nullable: false }),
-        languageId: intArg({ nullable: false })
       },
-      resolve: async (parent, { author, title, description, ISBN, status, condition, categoryId, languageId }, ctx) => {
+      resolve: async (parent, { author, title, description, isbn, language, status, condition, rating, published_date, price, categoryId }, ctx) => {
         const userId = getUserId(ctx)
-        if (!userId) throw new Error('Could not authenticate user.')
-        const book = await ctx.prisma.book.create({
+        if (!userId) throw new Error('Could not authenticate users.')
+        const book = await ctx.prisma.books.create({
           data: {
-            author, title, description, ISBN, status, condition,
-            category: { connect: { id: Number(categoryId) } },
-            language: { connect: { id: Number(languageId) } },
-            owner: { connect: { id: Number(userId) } },
+            author, title, description, isbn, language, status, condition, rating, price, published_date,
+            categories: { connect: { id: Number(categoryId) } },
+            created_on: Date(),
+            updated_on: Date()
           },
         })
-        const user = await ctx.prisma.user.findOne({
+        const categories = await ctx.prisma.categories.findOne({
           where: {
-            id: Number(userId),
+            id: Number(book.category_id),
           },
         })
         return {
+          id: book.id,
           author: book.author,
           condition: book.condition,
           description: book.description,
-          id: book.id,
-          ISBN: book.ISBN,
+          isbn: book.isbn,
+          language: book.language,
           rating: book.rating,
           status: book.status,
           title: book.title,
-          owner: user
+          price: book.price,
+          published_date: book.published_date
         }
       },
     })
 
     t.field('deleteBook', {
-      type: 'Book',
+      type: 'books',
       nullable: true,
       args: { id: intArg({ nullable: false }) },
       resolve: (parent, { id }, ctx) => {
-        return ctx.prisma.book.delete({
+        return ctx.prisma.books.delete({
           where: {
             id,
           },
@@ -110,59 +118,62 @@ export const Mutation = mutationType({
     })
 
     t.field('createCheckout', {
-      type: 'Checkout',
+      type: 'checkouts',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }), totalPrice: floatArg({ nullable: false }), status: stringArg({ nullable: false }), },
-      resolve: async (parent, { orderId, totalPrice, status }, ctx) => {
+      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), checkout_type: stringArg({ nullable: false }) },
+      resolve: async (parent, { orderId, price, checkout_type }, ctx) => {
         const userId = getUserId(ctx)
-        if (!userId) throw new Error('Could not authenticate user.')
-        const checkout = await ctx.prisma.checkout.create({
+        if (!userId) throw new Error('Could not authenticate users.')
+        const checkout = await ctx.prisma.checkouts.create({
           data: {
-            totalPrice, status, orders: { connect: { id: Number(orderId) } },
-            ownerCheck: { connect: { id: Number(userId) } }
+            price, checkout_type, checkout_date: Date(), orders: { connect: { id: Number(orderId) } },
+            users: { connect: { id: Number(userId) } },
+            created_on: Date(),
+            updated_on: Date()
           },
         })
-        const userResp = await ctx.prisma.user.findOne({
+        const order = await ctx.prisma.orders.findOne({
           where: {
-            id: Number(checkout.userId),
+            id: Number(checkout.order_id),
           },
         })
-        const ownerResp = await ctx.prisma.user.findOne({
+        const user = await ctx.prisma.users.findOne({
           where: {
             id: Number(userId),
           },
         })
         return {
           id: checkout.id,
-          status: checkout.status,
-          totalPrice: checkout.totalPrice,
-          user: userResp as any,
-          owner: ownerResp as any
+          price: checkout.price,
+          checkout_type: checkout.checkout_type,
+          checkout_date: checkout.checkout_date,
+          user,
+          order
         }
       },
     })
 
     t.field('createOrder', {
-      type: 'Order',
+      type: 'orders',
       nullable: true,
-      args: { bookId: intArg({ nullable: false }), unitPrice: floatArg({ nullable: false }), quantity: intArg({ nullable: false }), },
-      resolve: async (parent, { bookId, unitPrice, quantity }, ctx) => {
+      args: { bookId: intArg({ nullable: false }) },
+      resolve: async (parent, { bookId }, ctx) => {
         const userId = getUserId(ctx)
 
-        const order = await ctx.prisma.order.create({
+        const order = await ctx.prisma.orders.create({
           data: {
-            unitPrice,
-            quantity,
-            book: { connect: { id: Number(bookId) } },
-            user: { connect: { id: Number(userId) } },
+            books: { connect: { id: Number(bookId) } },
+            users: { connect: { id: Number(userId) } },
+            created_on: Date(),
+            updated_on: Date()
           },
         })
-        const user = await ctx.prisma.user.findOne({
+        const user = await ctx.prisma.users.findOne({
           where: {
             id: Number(userId),
           },
         })
-        const book = await ctx.prisma.book.findOne({
+        const book = await ctx.prisma.books.findOne({
           where: {
             id: Number(bookId),
           },
@@ -170,8 +181,6 @@ export const Mutation = mutationType({
 
         return {
           id: order.id,
-          unitPrice: order.unitPrice,
-          quantity: order.quantity,
           book,
           user
         }

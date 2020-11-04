@@ -7,70 +7,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Book {
-  id          Int      @id @default(autoincrement())
-  author      String
-  title       String
-  description String?
-  ISBN        String?
-  status      String
-  condition   String
-  rating      Int?
-  user        User?    @relation("user", fields: [userId], references: [id])
-  owner       User?    @relation("owner", fields: [userId], references: [id])
-  userId      Int?
-  category    Category @relation(fields: [categoryId], references: [id])
-  categoryId  Int
-  language    Language @relation(fields: [languageId], references: [id])
-  languageId  Int
-  orders      Order[]
-  User        User?    @relation(fields: [userId], references: [id])
+model books {
+  id             Int        @id @default(autoincrement())
+  category_id    Int
+  title          String     @unique
+  author         String
+  language       String
+  status         String
+  condition      String
+  rating         Int?
+  description    String?
+  published_date DateTime?
+  price          Float
+  isbn           Int?       @unique
+  created_on     DateTime
+  updated_on     DateTime
+  categories     categories @relation(fields: [category_id], references: [id])
+  orders         orders[]
 }
 
-model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @unique
-  password  String     @default("")
-  name      String?
-  isAdmin   Boolean    @default(false)
-  books     Book[]
-  user      Book[]     @relation("user")
-  owner     Book[]     @relation("owner")
-  orders    Order[]
-  checkouts Checkout[]
-  checkout  Checkout[] @relation("ownerCheck")
+model categories {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  created_on DateTime
+  updated_on DateTime
+  books      books[]
 }
 
-model Category {
-  id    Int    @id @default(autoincrement())
-  name  String
-  books Book[]
+model checkouts {
+  id            Int       @id @default(autoincrement())
+  order_id      Int
+  user_id       Int
+  checkout_type String
+  checkout_date DateTime?
+  return_date   DateTime?
+  price         Float
+  created_on    DateTime
+  updated_on    DateTime
+  orders        orders    @relation(fields: [order_id], references: [id])
+  users         users     @relation(fields: [user_id], references: [id])
 }
 
-model Language {
-  id    Int    @id @default(autoincrement())
-  name  String
-  books Book[]
+model orders {
+  id         Int         @id @default(autoincrement())
+  user_id    Int
+  book_id    Int
+  created_on DateTime
+  updated_on DateTime
+  books      books       @relation(fields: [book_id], references: [id])
+  users      users       @relation(fields: [user_id], references: [id])
+  checkouts  checkouts[]
 }
 
-model Order {
-  id         Int       @id @default(autoincrement())
-  unitPrice  Float
-  quantity   Int
-  user       User      @relation(fields: [userId], references: [id])
-  userId     Int
-  book       Book      @relation(fields: [bookId], references: [id])
-  bookId     Int
-  checkout   Checkout? @relation(fields: [checkoutId], references: [id])
-  checkoutId Int?
-}
-
-model Checkout {
-  id         Int     @id @default(autoincrement())
-  status     String
-  totalPrice Float
-  orders     Order[]
-  ownerCheck User?   @relation("ownerCheck", fields: [userId], references: [id])
-  user       User?   @relation(fields: [userId], references: [id])
-  userId     Int?
+model users {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  password   String
+  email      String      @unique
+  is_admin   Boolean     @default(false)
+  created_on DateTime
+  last_login DateTime?
+  updated_on DateTime
+  checkouts  checkouts[]
+  orders     orders[]
 }
