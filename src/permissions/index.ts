@@ -28,6 +28,6 @@ export const permissions = shield({
   Mutation: {
     addBook: rules.isAuthenticatedUser,
     deleteBook: rules.isBookOwner,
-    checkout: rules.isBookOwner,
+    createCheckout: rules.isBookOwner,
   },
 })

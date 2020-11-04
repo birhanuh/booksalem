@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "postgres://birhanu@localhost/booksalem_development"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Book {
@@ -38,6 +38,7 @@ model User {
   owner     Book[]     @relation("owner")
   orders    Order[]
   checkouts Checkout[]
+  checkout  Checkout[] @relation("ownerCheck")
 }
 
 model Category {
@@ -69,6 +70,7 @@ model Checkout {
   status     String
   totalPrice Float
   orders     Order[]
-  User       User?   @relation(fields: [userId], references: [id])
+  ownerCheck User?   @relation("ownerCheck", fields: [userId], references: [id])
+  user       User?   @relation(fields: [userId], references: [id])
   userId     Int?
 }

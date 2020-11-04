@@ -8,5 +8,6 @@ export const Checkout = objectType({
     t.model.totalPrice()
     t.model.orders()
     t.field('user', { type: 'User', nullable: false })
+    t.field('owner', { type: 'User', nullable: false })
   },
 })
