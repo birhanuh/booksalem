@@ -79,6 +79,7 @@ export const Mutation = mutationType({
           data: {
             author, title, description, isbn, language, status, condition, rating, price, published_date,
             categories: { connect: { id: Number(categoryId) } },
+            users: { connect: { id: Number(userId) } },
             created_on: Date(),
             updated_on: Date()
           },

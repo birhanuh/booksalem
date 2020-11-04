@@ -22,7 +22,9 @@ model books {
   isbn           Int?       @unique
   created_on     DateTime
   updated_on     DateTime
+  user_id        Int
   categories     categories @relation(fields: [category_id], references: [id])
+  users          users      @relation(fields: [user_id], references: [id])
   orders         orders[]
 }
 
@@ -68,6 +70,7 @@ model users {
   created_on DateTime
   last_login DateTime?
   updated_on DateTime
+  books      books[]
   checkouts  checkouts[]
   orders     orders[]
 }

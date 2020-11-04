@@ -8,6 +8,7 @@ export const User = objectType({
     t.model.email()
     t.model.password()
     t.model.is_admin()
+    t.model.books()
     t.model.orders({ pagination: false })
   },
 })

@@ -23,6 +23,12 @@ type books {
   title: String!
 }
 
+input booksWhereUniqueInput {
+  id: Int
+  isbn: Int
+  title: String
+}
+
 type categories {
   books: [books!]!
   id: Int!
@@ -64,6 +70,7 @@ type Query {
 }
 
 type users {
+  books(after: booksWhereUniqueInput, before: booksWhereUniqueInput, first: Int, last: Int): [books!]!
   email: String!
   id: Int!
   is_admin: Boolean!
