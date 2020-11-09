@@ -8,15 +8,14 @@ const rules = {
   }),
   isBookOwner: rule()(async (parent, { id }, context) => {
     const userId = getUserId(context)
-    const author = await context.prisma.book
+    const book = await context.prisma.book
       .findOne({
         where: {
           id: Number(id),
         },
       })
-      .author()
-    return userId === author.id
-  }),
+    return userId === book.owner_id;
+  })
 }
 
 export const permissions = shield({
@@ -28,6 +27,6 @@ export const permissions = shield({
   Mutation: {
     addBook: rules.isAuthenticatedUser,
     deleteBook: rules.isBookOwner,
-    createCheckout: rules.isBookOwner,
-  },
+    createCheckout: rules.isBookOwner
+  }
 })
