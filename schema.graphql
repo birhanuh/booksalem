@@ -3,62 +3,85 @@
 
 
 type AuthPayload {
+  errors: Errors
   token: String
-  user: User
+  user: users
 }
 
-type Book {
+type books {
   author: String!
-  category: Category
+  categories: categories!
   condition: String!
   description: String
   id: Int!
-  ISBN: String
-  language: Language
-  owner: User
+  isbn: Int
+  language: String!
+  orders: [orders!]!
+  price: Float!
+  published_date: DateTime
   rating: Int
   status: String!
   title: String!
-  user: User
 }
 
-type Category {
+input booksWhereUniqueInput {
+  id: Int
+  isbn: Int
+  title: String
+}
+
+type categories {
+  books: [books!]!
   id: Int!
   name: String!
 }
 
-type Language {
+type checkouts {
+  checkout_date: DateTime
+  checkout_type: String!
   id: Int!
-  name: String!
+  orders: orders
+  price: Float!
+  return_date: DateTime
+  users: users!
+}
+
+scalar DateTime
+
+type Errors {
+  message: String
+  path: String
 }
 
 type Mutation {
-  addBook(author: String!, categoryId: Int!, condition: String!, description: String!, ISBN: String!, languageId: Int!, status: String!, title: String!): Book
-  checkout(bookId: Int!): Book
-  createOrder(bookId: Int!, quantity: Int!, unitPrice: Float!): Order
-  deleteBook(id: Int!): Book
+  addBook(author: String!, categoryId: Int!, condition: String!, description: String, isbn: Int, language: String!, price: Float!, published_date: String!, rating: Int, status: String!, title: String!): books
+  createCheckout(checkout_type: String!, orderId: Int!, price: Float!): checkouts
+  createOrder(bookId: Int!): orders
+  deleteBook(id: Int!): books
   login(email: String!, password: String!): AuthPayload
-  signup(email: String!, name: String, password: String!): AuthPayload
+  signup(email: String!, name: String!, password: String!, phone: String): AuthPayload
 }
 
-type Order {
-  book: Book
+type orders {
+  books: books!
   id: Int!
-  quantity: Int!
-  unitPrice: Float!
-  user: User
+  users: users!
 }
 
 type Query {
-  filterBooks(searchString: String): [Book]
-  getAvailableBooks: [Book]
-  getOrder(orderId: Int!): Order
-  me: User
+  filterBooks(searchString: String): [books]
+  getAvailableBooks: [books]
+  getOrder(orderId: Int!): orders
+  me: users
 }
 
-type User {
-  books: [Book!]!
+type users {
+  books(after: booksWhereUniqueInput, before: booksWhereUniqueInput, first: Int, last: Int): [books!]!
   email: String!
   id: Int!
-  name: String
+  is_admin: Boolean!
+  name: String!
+  orders: [orders!]!
+  password: String!
+  phone: String
 }

@@ -1,20 +1,21 @@
 import { objectType } from '@nexus/schema'
 
 export const Book = objectType({
-  name: 'Book',
+  name: 'books',
   definition(t) {
     t.model.id()
     t.model.title()
     t.model.description()
     t.model.author()
+    t.model.language()
     t.model.status()
     t.model.condition()
-    t.model.ISBN()
+    t.model.isbn()
     t.model.rating()
-    // t.field('owner', { type: 'User', nullable: false })
-    t.field('category', { type: 'Category' })
-    t.field('language', { type: 'Language' })
-    t.field('owner', { type: 'User' })
-    t.field('user', { type: 'User' })
+    t.model.published_date()
+    t.model.price()
+    t.model.categories()
+    t.model.orders({ pagination: false })
   },
 })
+

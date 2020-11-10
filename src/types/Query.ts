@@ -5,11 +5,11 @@ import { getUserId } from '../utils'
 export const Query = queryType({
   definition(t) {
     t.field('me', {
-      type: 'User',
+      type: 'users',
       nullable: true,
       resolve: (parent, args, ctx) => {
         const userId = getUserId(ctx)
-        return ctx.prisma.user.findOne({
+        return ctx.prisma.users.findOne({
           where: {
             id: Number(userId),
           },
@@ -18,21 +18,21 @@ export const Query = queryType({
     })
 
     t.list.field('getAvailableBooks', {
-      type: 'Book',
+      type: 'books',
       resolve: (parent, args, ctx) => {
-        return ctx.prisma.book.findMany({
+        return ctx.prisma.books.findMany({
           where: { status: "IN STORE" },
         })
       },
     })
 
     t.list.field('filterBooks', {
-      type: 'Book',
+      type: 'books',
       args: {
         searchString: stringArg({ nullable: true }),
       },
       resolve: (parent, { searchString }, ctx) => {
-        return ctx.prisma.book.findMany({
+        return ctx.prisma.books.findMany({
           where: {
             OR: [
               {
@@ -52,32 +52,30 @@ export const Query = queryType({
     })
 
     t.field('getOrder', {
-      type: 'Order',
+      type: 'orders',
       nullable: true,
       args: { orderId: intArg({ nullable: false }) },
       resolve: async (parent, { orderId }, ctx) => {
-        const order = await ctx.prisma.order.findOne({
+        const order = await ctx.prisma.orders.findOne({
           where: {
             id: Number(orderId),
           },
         })
-        const userResp = order && await ctx.prisma.user.findOne({
+        const user = order && await ctx.prisma.users.findOne({
           where: {
-            id: Number(order.userId),
+            id: Number(order.user_id),
           },
         })
-        const bookResp = order && await ctx.prisma.book.findOne({
+        const book = order && await ctx.prisma.books.findOne({
           where: {
-            id: Number(order.bookId),
+            id: Number(order.book_id),
           },
         })
 
         return {
           id: order && order.id as any,
-          book: bookResp && bookResp,
-          user: userResp && userResp,
-          unitPrice: order && order.unitPrice as any,
-          quantity: order && order.quantity as any
+          book,
+          user
         }
       },
     })

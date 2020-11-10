@@ -1,12 +1,10 @@
 import { objectType } from '@nexus/schema'
 
 export const Order = objectType({
-  name: 'Order',
+  name: 'orders',
   definition(t) {
     t.model.id()
-    t.model.unitPrice()
-    t.model.quantity()
-    t.field('user', { type: 'User' })
-    t.field('book', { type: 'Book' })
+    t.model.books()
+    t.model.users()
   },
 })
