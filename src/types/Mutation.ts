@@ -1,8 +1,8 @@
 import { floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
-import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client'
 import { compare, hash } from 'bcryptjs'
 import { sign } from 'jsonwebtoken'
 import { APP_SECRET, getUserId } from '../utils'
+import { DateScalar } from './DateScalar'
 
 export const Mutation = mutationType({
   definition(t) {
@@ -21,9 +21,7 @@ export const Mutation = mutationType({
             name,
             email,
             password: hashedPassword,
-            phone,
-            created_on: new Date(),
-            updated_on: new Date()
+            phone
           },
         }).then(user => {
           return {
@@ -53,11 +51,19 @@ export const Mutation = mutationType({
           },
         })
         if (!user) {
-          throw new Error(`No user found for email: ${email}`)
+          return {
+            errors: {
+              path: "email", message: `No user found for email: ${email}`
+            }
+          }
         }
         const passwordValid = await compare(password, user.password)
         if (!passwordValid) {
-          throw new Error('Invalid password')
+          return {
+            errors: {
+              path: 'password', message: 'Invalid password'
+            }
+          }
         }
         return {
           token: sign({ userId: user.id }, APP_SECRET),
@@ -67,49 +73,50 @@ export const Mutation = mutationType({
     })
 
     t.field('addBook', {
-      type: 'books',
+      type: 'AddBookPayload',
       args: {
         title: stringArg({ nullable: false }),
         author: stringArg({ nullable: false }),
-        description: stringArg(),
         isbn: intArg(),
         status: stringArg({ nullable: false }),
-        language: stringArg({ nullable: false }),
         condition: stringArg({ nullable: false }),
-        price: floatArg({ nullable: false }),
-        published_date: stringArg({ nullable: false }),
-        rating: intArg(),
+        published_date: DateScalar,
+        languageId: intArg({ nullable: false }),
         categoryId: intArg({ nullable: false }),
+        price: floatArg({ nullable: false }),
+        cover_url: stringArg({ nullable: false }),
+        description: stringArg(),
       },
-      resolve: async (parent, { author, title, description, isbn, language, status, condition, rating, published_date, price, categoryId }, ctx) => {
-        const userId = getUserId(ctx)
+      resolve: async (parent, { author, title, isbn, status, condition, published_date, languageId, categoryId, price, cover_url, description }, ctx) => {
+        // const userId = getUserId(ctx)
+        const userId = 1
         if (!userId) throw new Error('Could not authenticate users.')
-        const book = await ctx.prisma.books.create({
-          data: {
-            author, title, description, isbn, language, status, condition, rating, price, published_date,
-            categories: { connect: { id: Number(categoryId) } },
-            users: { connect: { id: Number(userId) } },
-            created_on: new Date(),
-            updated_on: new Date()
-          },
-        })
-        const categories = await ctx.prisma.categories.findOne({
-          where: {
-            id: Number(book.category_id),
-          },
-        })
-        return {
-          id: book.id,
-          author: book.author,
-          condition: book.condition,
-          description: book.description,
-          isbn: book.isbn,
-          language: book.language,
-          rating: book.rating,
-          status: book.status,
-          title: book.title,
-          price: book.price,
-          published_date: book.published_date
+
+        try {
+          const book = await ctx.prisma.books.create({
+            data: {
+              author, title, isbn, status, condition, published_date, price, cover_url, description,
+              languages: { connect: { id: Number(languageId) } },
+              categories: { connect: { id: Number(categoryId) } },
+              users: { connect: { id: Number(userId) } }
+            },
+          })
+          const categories = await ctx.prisma.categories.findOne({
+            where: {
+              id: Number(book.category_id),
+            },
+          })
+          console.log("BOOK: ", book)
+          return {
+            books: book
+          }
+        } catch (err) {
+          console.log("ERROR: ", err)
+          return {
+            errors: {
+              path: err.meta.target[0], message: err.message
+            }
+          }
         }
       },
     })
@@ -137,9 +144,7 @@ export const Mutation = mutationType({
         const checkout = await ctx.prisma.checkouts.create({
           data: {
             price, checkout_type, checkout_date: new Date(), orders: { connect: { id: Number(orderId) } },
-            users: { connect: { id: Number(userId) } },
-            created_on: new Date(),
-            updated_on: new Date()
+            users: { connect: { id: Number(userId) } }
           },
         })
         const order = await ctx.prisma.orders.findOne({
@@ -173,9 +178,7 @@ export const Mutation = mutationType({
         const order = await ctx.prisma.orders.create({
           data: {
             books: { connect: { id: Number(bookId) } },
-            users: { connect: { id: Number(userId) } },
-            created_on: new Date(),
-            updated_on: new Date()
+            users: { connect: { id: Number(userId) } }
           },
         })
         const user = await ctx.prisma.users.findOne({
