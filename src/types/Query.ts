@@ -21,8 +21,46 @@ export const Query = queryType({
       type: 'books',
       resolve: (parent, args, ctx) => {
         return ctx.prisma.books.findMany({
-          where: { status: "IN STORE" },
+          where: { status: "available" },
         })
+      },
+    })
+
+    t.field('getBook', {
+      type: 'BookPayload',
+      nullable: true,
+      args: {
+        id: intArg({ nullable: false }),
+      },
+      resolve: async (parent, { id }, ctx) => {
+        try {
+          const book = await ctx.prisma.books.findOne({
+            where: { id: Number(id) },
+          })
+
+          return {
+            book
+          }
+        } catch (error) {
+          return {
+            errors: error
+          }
+        }
+
+      },
+    })
+
+    t.list.field('getLanguages', {
+      type: 'languages',
+      resolve: (parent, args, ctx) => {
+        return ctx.prisma.languages.findMany();
+      },
+    })
+
+    t.list.field('getCategories', {
+      type: 'categories',
+      resolve: (parent, args, ctx) => {
+        return ctx.prisma.categories.findMany();
       },
     })
 
@@ -37,6 +75,11 @@ export const Query = queryType({
             OR: [
               {
                 title: {
+                  contains: searchString || undefined,
+                },
+              },
+              {
+                author: {
                   contains: searchString || undefined,
                 },
               },

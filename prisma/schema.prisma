@@ -16,7 +16,7 @@ model books {
   condition      String
   rating         Int?
   description    String?
-  published_date DateTime?
+  published_date String?
   price          Float
   isbn           Int?       @unique
   owner_id       Int

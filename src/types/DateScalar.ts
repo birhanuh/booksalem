@@ -1,7 +1,7 @@
 import { scalarType } from '@nexus/schema'
 
 export const DateScalar = scalarType({
-  name: 'Date',
+  name: 'DateTime',
   asNexusMethod: 'date',
   description: 'Date custom scalar type',
   parseValue(value) {

@@ -2,7 +2,7 @@ import { floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
 import { compare, hash } from 'bcryptjs'
 import { sign } from 'jsonwebtoken'
 import { APP_SECRET, getUserId } from '../utils'
-import { DateScalar } from './DateScalar'
+import { Upload } from './Upload'
 
 export const Mutation = mutationType({
   definition(t) {
@@ -73,23 +73,24 @@ export const Mutation = mutationType({
     })
 
     t.field('addBook', {
-      type: 'AddBookPayload',
+      type: 'BookPayload',
       args: {
         title: stringArg({ nullable: false }),
         author: stringArg({ nullable: false }),
         isbn: intArg(),
         status: stringArg({ nullable: false }),
         condition: stringArg({ nullable: false }),
-        published_date: DateScalar,
+        published_date: stringArg(),
         languageId: intArg({ nullable: false }),
         categoryId: intArg({ nullable: false }),
         price: floatArg({ nullable: false }),
-        cover_url: stringArg({ nullable: false }),
+        coverUrl: Upload,
         description: stringArg(),
       },
-      resolve: async (parent, { author, title, isbn, status, condition, published_date, languageId, categoryId, price, cover_url, description }, ctx) => {
+      resolve: async (parent, { author, title, isbn, status, condition, published_date, languageId, categoryId, price, coverUrl, description }, ctx) => {
         // const userId = getUserId(ctx)
         const userId = 1
+        const cover_url = ''
         if (!userId) throw new Error('Could not authenticate users.')
 
         try {
@@ -106,12 +107,11 @@ export const Mutation = mutationType({
               id: Number(book.category_id),
             },
           })
-          console.log("BOOK: ", book)
+
           return {
-            books: book
+            book
           }
         } catch (err) {
-          console.log("ERROR: ", err)
           return {
             errors: {
               path: err.meta.target[0], message: err.message

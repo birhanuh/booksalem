@@ -1,6 +1,6 @@
 import { objectType } from '@nexus/schema'
 
-export const Category = objectType({
+export const Language = objectType({
   name: 'languages',
   definition(t) {
     t.model.id()

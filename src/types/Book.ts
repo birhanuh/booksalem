@@ -14,15 +14,14 @@ export const Book = objectType({
     t.model.price()
     t.model.description()
     t.model.rating()
-    t.model.orders({ pagination: false })
-    t.field('errors', { type: 'Errors' })
+    t.model.orders({ pagination: true })
   },
 })
 
-export const AddBookPayload = objectType({
-  name: 'AddBookPayload',
+export const BookPayload = objectType({
+  name: 'BookPayload',
   definition(t) {
-    t.field('books', { type: 'books' })
+    t.field('book', { type: 'books', nullable: true })
     t.field('errors', { type: 'Errors' })
   },
 })
