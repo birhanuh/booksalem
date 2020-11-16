@@ -1,10 +1,10 @@
 import { objectType } from '@nexus/schema'
 
-export const Category = objectType({
-  name: 'categories',
+export const Language = objectType({
+  name: 'languages',
   definition(t) {
     t.model.id()
-    t.model.category()
+    t.model.language()
     t.model.books({ pagination: false })
   },
 })

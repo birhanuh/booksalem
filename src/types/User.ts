@@ -9,7 +9,7 @@ export const User = objectType({
     t.model.password()
     t.model.phone()
     t.model.is_admin()
-    t.model.books()
-    t.model.orders({ pagination: false })
+    t.model.books({ pagination: true })
+    t.model.orders({ pagination: true })
   },
 })

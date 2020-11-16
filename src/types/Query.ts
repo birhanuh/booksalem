@@ -19,10 +19,46 @@ export const Query = queryType({
 
     t.list.field('getAvailableBooks', {
       type: 'books',
+      resolve: async (parent, args, ctx) => {
+        return ctx.prisma.$queryRaw`SELECT books.*, languages.language, categories.category FROM books LEFT JOIN languages
+        ON books.language_id = languages.id LEFT JOIN categories
+        ON books.category_id = categories.id WHERE books.status = 'available';`
+      },
+    })
+
+    t.field('getBook', {
+      type: 'BookPayload',
+      nullable: true,
+      args: {
+        id: intArg({ nullable: false }),
+      },
+      resolve: async (parent, { id }, ctx) => {
+        const book = await ctx.prisma.$queryRaw`SELECT books.*, languages.language, categories.category FROM books LEFT JOIN languages
+          ON books.language_id = languages.id LEFT JOIN categories
+          ON books.category_id = categories.id WHERE books.id = ${Number(id)};`.then(res => res[0])
+
+        const bookStructured = {
+          ...book, language: { id: book.language_id, language: book.language }, category: { id: book.category_id, category: book.category }
+        }
+
+        return {
+          book: bookStructured
+        }
+
+      },
+    })
+
+    t.list.field('getLanguages', {
+      type: 'languages',
       resolve: (parent, args, ctx) => {
-        return ctx.prisma.books.findMany({
-          where: { status: "IN STORE" },
-        })
+        return ctx.prisma.languages.findMany();
+      },
+    })
+
+    t.list.field('getCategories', {
+      type: 'categories',
+      resolve: (parent, args, ctx) => {
+        return ctx.prisma.categories.findMany();
       },
     })
 
@@ -32,22 +68,9 @@ export const Query = queryType({
         searchString: stringArg({ nullable: true }),
       },
       resolve: (parent, { searchString }, ctx) => {
-        return ctx.prisma.books.findMany({
-          where: {
-            OR: [
-              {
-                title: {
-                  contains: searchString || undefined,
-                },
-              },
-              {
-                description: {
-                  contains: searchString || undefined,
-                },
-              },
-            ],
-          },
-        })
+        return ctx.prisma.$queryRaw`SELECT * FROM books LEFT JOIN languages
+        ON books.language_id = languages.id LEFT JOIN categories
+        ON books.category_id = categories.id WHERE books.title ILIKE ${searchString} OR books.author ILIKE ${searchString} OR books.description ILIKE ${searchString};`
       },
     })
 

@@ -1,7 +1,5 @@
-import { verify } from 'jsonwebtoken'
+import { verify, sign } from 'jsonwebtoken'
 import { Context } from './context'
-
-export const APP_SECRET = 'appsecret321'
 
 interface Token {
   userId: string
@@ -11,10 +9,20 @@ export function getUserId(context: Context) {
   const Authorization = context.request.get('Authorization')
   if (Authorization) {
     const token = Authorization.replace('Bearer ', '')
-    const verifiedToken = verify(token, APP_SECRET) as Token
+    const verifiedToken = verify(token, process.env.JWT_SECRET as string) as Token
     return verifiedToken && verifiedToken.userId
   }
+
+  throw new AuthError()
 }
+
+export class AuthError extends Error {
+  constructor() {
+    super('Could not authenticate users.')
+  }
+}
+
+export const createToken = (userId: number) => sign({ userId, expiresIn: '7d' }, process.env.JWT_SECRET as string);
 
 /**
 import Sequelize from "sequelize";
