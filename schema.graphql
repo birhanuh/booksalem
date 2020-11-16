@@ -8,18 +8,36 @@ type AuthPayload {
   user: users
 }
 
+type bookObj {
+  author: String
+  category: categories
+  condition: String
+  cover_url: String
+  description: String
+  id: Int
+  isbn: Int
+  language: languages
+  price: Float
+  published_date: String
+  rating: Int
+  status: String
+  title: String
+}
+
 type BookPayload {
-  book: books
+  book: bookObj
   errors: Errors
 }
 
 type books {
   author: String!
+  category: String!
   condition: String!
   cover_url: String!
   description: String
   id: Int!
   isbn: Int
+  language: String!
   orders(after: ordersWhereUniqueInput, before: ordersWhereUniqueInput, first: Int, last: Int): [orders!]!
   price: Float!
   published_date: String
@@ -36,8 +54,8 @@ input booksWhereUniqueInput {
 
 type categories {
   books: [books!]!
+  category: String!
   id: Int!
-  name: String!
 }
 
 type checkouts {
@@ -61,14 +79,14 @@ type Errors {
 type languages {
   books: [books!]!
   id: Int!
-  name: String!
+  language: String!
 }
 
 type Mutation {
-  addBook(author: String!, categoryId: Int!, condition: String!, coverUrl: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
+  addBook(author: String!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
   createCheckout(checkout_type: String!, orderId: Int!, price: Float!): checkouts
   createOrder(bookId: Int!): orders
-  deleteBook(id: Int!): books
+  deleteBook(id: Int!): BookPayload
   login(email: String!, password: String!): AuthPayload
   signup(email: String!, name: String!, password: String!, phone: String): AuthPayload
 }

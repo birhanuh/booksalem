@@ -32,7 +32,7 @@ model books {
 
 model categories {
   id         Int      @id @default(autoincrement())
-  name       String   @unique
+  category   String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
   books      books[]
@@ -83,7 +83,7 @@ model users {
 
 model languages {
   id         Int      @id @default(autoincrement())
-  name       String   @unique
+  language   String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
   books      books[]

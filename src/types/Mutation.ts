@@ -1,8 +1,7 @@
-import { floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
+import { arg, floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
 import { compare, hash } from 'bcryptjs'
-import { sign } from 'jsonwebtoken'
-import { APP_SECRET, getUserId } from '../utils'
-import { Upload } from './Upload'
+import { processUpload } from '../upload'
+import { createToken, getUserId } from '../utils'
 
 export const Mutation = mutationType({
   definition(t) {
@@ -25,7 +24,7 @@ export const Mutation = mutationType({
           },
         }).then(user => {
           return {
-            token: sign({ userId: user.id }, APP_SECRET),
+            token: createToken(user.id),
             user,
           }
         }).catch((err: any) => {
@@ -66,7 +65,7 @@ export const Mutation = mutationType({
           }
         }
         return {
-          token: sign({ userId: user.id }, APP_SECRET),
+          token: createToken(user.id),
           user,
         }
       },
@@ -84,16 +83,16 @@ export const Mutation = mutationType({
         languageId: intArg({ nullable: false }),
         categoryId: intArg({ nullable: false }),
         price: floatArg({ nullable: false }),
-        coverUrl: Upload,
+        coverFile: arg({ type: 'Upload' }),
         description: stringArg(),
       },
-      resolve: async (parent, { author, title, isbn, status, condition, published_date, languageId, categoryId, price, coverUrl, description }, ctx) => {
-        // const userId = getUserId(ctx)
-        const userId = 1
-        const cover_url = ''
-        if (!userId) throw new Error('Could not authenticate users.')
-
+      resolve: async (parent, { author, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
         try {
+          const userId = getUserId(ctx)
+
+          const uploadPath = await processUpload(coverFile);
+          const cover_url = process.env.SERVER_URL + uploadPath
+
           const book = await ctx.prisma.books.create({
             data: {
               author, title, isbn, status, condition, published_date, price, cover_url, description,
@@ -102,16 +101,12 @@ export const Mutation = mutationType({
               users: { connect: { id: Number(userId) } }
             },
           })
-          const categories = await ctx.prisma.categories.findOne({
-            where: {
-              id: Number(book.category_id),
-            },
-          })
 
           return {
             book
           }
         } catch (err) {
+          console.log('addBook err: ', err)
           return {
             errors: {
               path: err.meta.target[0], message: err.message
@@ -122,15 +117,19 @@ export const Mutation = mutationType({
     })
 
     t.field('deleteBook', {
-      type: 'books',
+      type: 'BookPayload',
       nullable: true,
       args: { id: intArg({ nullable: false }) },
-      resolve: (parent, { id }, ctx) => {
-        return ctx.prisma.books.delete({
+      resolve: async (parent, { id }, ctx) => {
+        const book = await ctx.prisma.books.delete({
           where: {
             id,
           },
         })
+
+        return {
+          book
+        }
       },
     })
 
@@ -140,7 +139,6 @@ export const Mutation = mutationType({
       args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), checkout_type: stringArg({ nullable: false }) },
       resolve: async (parent, { orderId, price, checkout_type }, ctx) => {
         const userId = getUserId(ctx)
-        if (!userId) throw new Error('Could not authenticate users.')
         const checkout = await ctx.prisma.checkouts.create({
           data: {
             price, checkout_type, checkout_date: new Date(), orders: { connect: { id: Number(orderId) } },

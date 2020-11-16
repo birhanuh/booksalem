@@ -1,4 +1,5 @@
-import { objectType } from '@nexus/schema'
+import { objectType, stringArg } from '@nexus/schema'
+import { type } from 'os'
 
 export const Book = objectType({
   name: 'books',
@@ -14,14 +15,35 @@ export const Book = objectType({
     t.model.price()
     t.model.description()
     t.model.rating()
+    t.string('language', { nullable: false })
+    t.string('category', { nullable: false })
     t.model.orders({ pagination: true })
+  },
+})
+
+const BookObj = objectType({
+  name: 'bookObj',
+  definition(t) {
+    t.int('id')
+    t.string('title')
+    t.string('author')
+    t.string('status')
+    t.string('condition')
+    t.int('isbn')
+    t.string('published_date')
+    t.string('cover_url')
+    t.float('price')
+    t.string('description')
+    t.int('rating')
+    t.field('language', { type: 'languages' })
+    t.field('category', { type: 'categories' })
   },
 })
 
 export const BookPayload = objectType({
   name: 'BookPayload',
   definition(t) {
-    t.field('book', { type: 'books', nullable: true })
+    t.field('book', { type: BookObj, nullable: true })
     t.field('errors', { type: 'Errors' })
   },
 })

@@ -10,4 +10,10 @@ export const DateScalar = scalarType({
   serialize(value) {
     return value.getTime()
   },
+  // parseLiteral(ast) {
+  //   if (ast.kind === Kind.INT) {
+  //     return new Date(ast.value)
+  //   }
+  //   return null
+  // },
 })
