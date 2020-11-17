@@ -1,5 +1,5 @@
 import { intArg, queryType, stringArg } from '@nexus/schema'
-import { or } from 'graphql-shield'
+import { compare } from 'bcryptjs'
 import { getUserId } from '../utils'
 
 export const Query = queryType({

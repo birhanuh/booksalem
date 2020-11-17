@@ -84,11 +84,14 @@ type languages {
 
 type Mutation {
   addBook(author: String!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
+  checkPassword(password: String!): UserPayload
+  createAccount(email: String!, name: String!, password: String!, phone: String): AuthPayload
   createCheckout(checkout_type: String!, orderId: Int!, price: Float!): checkouts
   createOrder(bookId: Int!): orders
   deleteBook(id: Int!): BookPayload
-  login(email: String!, password: String!): AuthPayload
-  signup(email: String!, name: String!, password: String!, phone: String): AuthPayload
+  signIn(email: String!, password: String!): AuthPayload
+  updatePassword(password: String!): UserPayload
+  updateProfile(email: String!, name: String!, phone: String): UserPayload
 }
 
 type orders {
@@ -118,6 +121,11 @@ scalar Upload
 input User_idBook_idCompoundUniqueInput {
   book_id: Int!
   user_id: Int!
+}
+
+type UserPayload {
+  errors: Errors
+  user: users
 }
 
 type users {

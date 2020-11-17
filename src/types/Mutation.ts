@@ -5,7 +5,7 @@ import { createToken, getUserId } from '../utils'
 
 export const Mutation = mutationType({
   definition(t) {
-    t.field('signup', {
+    t.field('createAccount', {
       type: 'AuthPayload',
       args: {
         name: stringArg({ nullable: false }),
@@ -25,7 +25,7 @@ export const Mutation = mutationType({
         }).then(user => {
           return {
             token: createToken(user.id),
-            user,
+            user
           }
         }).catch((err: any) => {
           return {
@@ -37,7 +37,7 @@ export const Mutation = mutationType({
       },
     })
 
-    t.field('login', {
+    t.field('signIn', {
       type: 'AuthPayload',
       args: {
         email: stringArg({ nullable: false }),
@@ -49,6 +49,7 @@ export const Mutation = mutationType({
             email,
           },
         })
+
         if (!user) {
           return {
             errors: {
@@ -56,6 +57,7 @@ export const Mutation = mutationType({
             }
           }
         }
+
         const passwordValid = await compare(password, user.password)
         if (!passwordValid) {
           return {
@@ -64,11 +66,109 @@ export const Mutation = mutationType({
             }
           }
         }
+
         return {
           token: createToken(user.id),
           user,
         }
       },
+    })
+
+    t.field('updateProfile', {
+      type: 'UserPayload',
+      args: {
+        name: stringArg({ nullable: false }),
+        email: stringArg({ nullable: false }),
+        phone: stringArg()
+      },
+      resolve: async (_parent, { name, email, phone }, ctx) => {
+        const userId = await getUserId(ctx)
+        return ctx.prisma.users.update({
+          where: {
+            id: Number(userId),
+          },
+          data: {
+            name,
+            email,
+            phone
+          },
+        }).then(user => {
+          return {
+            user
+          }
+        }).catch((err: any) => {
+          return {
+            errors: {
+              path: err.meta.target[0], message: err.message
+            }
+          }
+        });
+      }
+    })
+
+    t.field('checkPassword', {
+      type: 'UserPayload',
+      args: {
+        password: stringArg({ nullable: false }),
+      },
+      resolve: async (parent, { password }, ctx) => {
+        const userId = getUserId(ctx)
+
+        const user = await ctx.prisma.users.findOne({
+          where: {
+            id: Number(userId),
+          },
+        })
+
+        if (!user) {
+          return {
+            errors: {
+              path: "email", message: 'No user found'
+            }
+          }
+        }
+
+        const passwordValid = await compare(password, user && user.password)
+        if (!passwordValid) {
+          return {
+            errors: {
+              path: 'password', message: 'Invalid password'
+            }
+          }
+        }
+
+        return {
+          user
+        }
+      },
+    })
+
+    t.field('updatePassword', {
+      type: 'UserPayload',
+      args: {
+        password: stringArg({ nullable: false })
+      },
+      resolve: async (_parent, { password }, ctx) => {
+        const userId = await getUserId(ctx)
+        return ctx.prisma.users.update({
+          where: {
+            id: Number(userId),
+          },
+          data: {
+            password
+          },
+        }).then(user => {
+          return {
+            user
+          }
+        }).catch((err: any) => {
+          return {
+            errors: {
+              path: err.meta.target[0], message: err.message
+            }
+          }
+        });
+      }
     })
 
     t.field('addBook', {
