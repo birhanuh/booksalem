@@ -67,18 +67,18 @@ model orders {
 }
 
 model users {
-  id         Int         @id @default(autoincrement())
-  name       String      @unique
-  password   String
-  email      String      @unique
-  is_admin   Boolean     @default(false)
-  last_login DateTime    @default(now())
-  phone      String?
-  created_at DateTime    @default(now())
-  updated_at DateTime    @default(now())
-  books      books[]
-  checkouts  checkouts[]
-  orders     orders[]
+  id           Int         @id @default(autoincrement())
+  name         String      @unique
+  password     String
+  email        String      @unique
+  is_admin     Boolean     @default(false)
+  last_sign_in DateTime    @default(now())
+  phone        String?
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @default(now())
+  books        books[]
+  checkouts    checkouts[]
+  orders       orders[]
 }
 
 model languages {
