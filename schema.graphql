@@ -60,12 +60,16 @@ type categories {
 
 type checkouts {
   checkout_date: DateTime
-  checkout_type: String!
   id: Int!
   orders: orders
   price: Float!
   return_date: DateTime
+  type: String!
   users: users!
+}
+
+input checkoutsWhereUniqueInput {
+  id: Int
 }
 
 """Date custom scalar type"""
@@ -86,7 +90,7 @@ type Mutation {
   addBook(author: String!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
   checkPassword(password: String!): UserPayload
   createAccount(email: String!, name: String!, password: String!, phone: String): AuthPayload
-  createCheckout(checkout_type: String!, orderId: Int!, price: Float!): checkouts
+  createCheckout(orderId: Int!, price: Float!, type: String!): checkouts
   createOrder(bookId: Int!): orders
   deleteBook(id: Int!): BookPayload
   signIn(email: String!, password: String!): AuthPayload
@@ -95,8 +99,13 @@ type Mutation {
 }
 
 type orders {
+  book_id: Int!
   books: books!
+  checkouts(after: checkoutsWhereUniqueInput, before: checkoutsWhereUniqueInput, first: Int, last: Int): [checkouts!]!
   id: Int!
+  order_date: DateTime!
+  status: String!
+  user_id: Int!
   users: users!
 }
 
@@ -112,6 +121,7 @@ type Query {
   getCategories: [categories]
   getLanguages: [languages]
   getOrder(orderId: Int!): orders
+  getOrders: [orders]
   me: users
 }
 
@@ -133,6 +143,7 @@ type users {
   email: String!
   id: Int!
   is_admin: Boolean!
+  last_sign_in: DateTime!
   name: String!
   orders(after: ordersWhereUniqueInput, before: ordersWhereUniqueInput, first: Int, last: Int): [orders!]!
   password: String!

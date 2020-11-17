@@ -1,5 +1,6 @@
 import { arg, floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
 import { compare, hash } from 'bcryptjs'
+import { or } from 'graphql-shield'
 import { processUpload } from '../upload'
 import { createToken, getUserId } from '../utils'
 
@@ -236,12 +237,12 @@ export const Mutation = mutationType({
     t.field('createCheckout', {
       type: 'checkouts',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), checkout_type: stringArg({ nullable: false }) },
-      resolve: async (parent, { orderId, price, checkout_type }, ctx) => {
+      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), type: stringArg({ nullable: false }) },
+      resolve: async (parent, { orderId, price, type }, ctx) => {
         const userId = getUserId(ctx)
         const checkout = await ctx.prisma.checkouts.create({
           data: {
-            price, checkout_type, checkout_date: new Date(), orders: { connect: { id: Number(orderId) } },
+            price, type, checkout_date: new Date(), orders: { connect: { id: Number(orderId) } },
             users: { connect: { id: Number(userId) } }
           },
         })
@@ -258,7 +259,7 @@ export const Mutation = mutationType({
         return {
           id: checkout.id,
           price: checkout.price,
-          checkout_type: checkout.checkout_type,
+          type: checkout.type,
           checkout_date: checkout.checkout_date,
           user,
           order
@@ -275,26 +276,13 @@ export const Mutation = mutationType({
 
         const order = await ctx.prisma.orders.create({
           data: {
+            order_date: new Date(),
             books: { connect: { id: Number(bookId) } },
             users: { connect: { id: Number(userId) } }
           },
         })
-        const user = await ctx.prisma.users.findOne({
-          where: {
-            id: Number(userId),
-          },
-        })
-        const book = await ctx.prisma.books.findOne({
-          where: {
-            id: Number(bookId),
-          },
-        })
 
-        return {
-          id: order.id,
-          book,
-          user
-        }
+        return order
       },
     })
   },

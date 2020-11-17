@@ -41,7 +41,7 @@ model categories {
 model checkouts {
   id            Int       @id @default(autoincrement())
   user_id       Int
-  checkout_type String
+  type          String
   checkout_date DateTime?
   return_date   DateTime?
   price         Float
@@ -59,6 +59,7 @@ model orders {
   id         Int         @unique @default(autoincrement())
   updated_at DateTime    @default(now())
   created_at DateTime    @default(now())
+  status     String      @default("active")
   books      books       @relation(fields: [book_id], references: [id])
   users      users       @relation(fields: [user_id], references: [id])
   checkouts  checkouts[]

@@ -78,28 +78,36 @@ export const Query = queryType({
       type: 'orders',
       nullable: true,
       args: { orderId: intArg({ nullable: false }) },
-      resolve: async (parent, { orderId }, ctx) => {
-        const order = await ctx.prisma.orders.findOne({
+      resolve: (parent, { orderId }, ctx) => {
+        return ctx.prisma.orders.findOne({
           where: {
             id: Number(orderId),
-          },
+          }
         })
-        const user = order && await ctx.prisma.users.findOne({
+      },
+    })
+
+    t.list.field('getOrders', {
+      type: 'orders',
+      nullable: true,
+      resolve: async (parent, args, ctx) => {
+        const userId = getUserId(ctx)
+
+        const user = await ctx.prisma.users.findOne({
           where: {
-            id: Number(order.user_id),
-          },
-        })
-        const book = order && await ctx.prisma.books.findOne({
-          where: {
-            id: Number(order.book_id),
-          },
+            id: Number(userId)
+          }
         })
 
-        return {
-          id: order && order.id as any,
-          book,
-          user
+        if (user && user.is_admin) {
+          return ctx.prisma.orders.findMany()
         }
+
+        return ctx.prisma.orders.findMany({
+          where: {
+            user_id: Number(userId)
+          }
+        })
       },
     })
   },
