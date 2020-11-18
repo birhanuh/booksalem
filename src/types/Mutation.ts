@@ -172,11 +172,38 @@ export const Mutation = mutationType({
       }
     })
 
+    t.field('addAuthor', {
+      type: 'AuthorPayload',
+      args: {
+        author: stringArg({ nullable: false })
+      },
+      resolve: async (parent, { author }, ctx) => {
+        try {
+          const authorRes = await ctx.prisma.authors.create({
+            data: {
+              author
+            },
+          })
+
+          return {
+            author: authorRes
+          }
+        } catch (err) {
+          console.log('addAuthor err: ', err)
+          return {
+            errors: {
+              path: err.meta.target[0], message: err.message
+            }
+          }
+        }
+      },
+    })
+
     t.field('addBook', {
       type: 'BookPayload',
       args: {
         title: stringArg({ nullable: false }),
-        author: stringArg({ nullable: false }),
+        authorId: intArg({ nullable: false }),
         isbn: intArg(),
         status: stringArg({ nullable: false }),
         condition: stringArg({ nullable: false }),
@@ -187,7 +214,7 @@ export const Mutation = mutationType({
         coverFile: arg({ type: 'Upload' }),
         description: stringArg(),
       },
-      resolve: async (parent, { author, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
+      resolve: async (parent, { authorId, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
         try {
           const userId = getUserId(ctx)
 
@@ -196,7 +223,8 @@ export const Mutation = mutationType({
 
           const book = await ctx.prisma.books.create({
             data: {
-              author, title, isbn, status, condition, published_date, price, cover_url, description,
+              title, isbn, status, condition, published_date, price, cover_url, description,
+              authors: { connect: { id: Number(authorId) } },
               languages: { connect: { id: Number(languageId) } },
               categories: { connect: { id: Number(categoryId) } },
               users: { connect: { id: Number(userId) } }

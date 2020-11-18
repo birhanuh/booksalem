@@ -2,6 +2,17 @@
 ### Do not make changes to this file directly
 
 
+type AuthorPayload {
+  author: authors
+  errors: Errors
+}
+
+type authors {
+  author: String!
+  books: [books!]!
+  id: Int!
+}
+
 type AuthPayload {
   errors: Errors
   token: String
@@ -9,7 +20,8 @@ type AuthPayload {
 }
 
 type bookObj {
-  author: String
+  author: authors
+  author_id: Int
   category: categories
   condition: String
   cover_url: String
@@ -31,6 +43,7 @@ type BookPayload {
 
 type books {
   author: String!
+  author_id: Int
   category: String!
   condition: String!
   cover_url: String!
@@ -87,7 +100,8 @@ type languages {
 }
 
 type Mutation {
-  addBook(author: String!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
+  addAuthor(author: String!): AuthorPayload
+  addBook(authorId: Int!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
   checkPassword(password: String!): UserPayload
   createAccount(email: String!, name: String!, password: String!, phone: String): AuthPayload
   createCheckout(orderId: Int!, price: Float!, type: String!): checkouts
@@ -116,6 +130,7 @@ input ordersWhereUniqueInput {
 
 type Query {
   filterBooks(searchString: String): [books]
+  getAuthors: [authors]
   getAvailableBooks: [books]
   getBook(id: Int!): BookPayload
   getCategories: [categories]
