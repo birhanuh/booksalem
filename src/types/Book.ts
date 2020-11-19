@@ -6,7 +6,6 @@ export const Book = objectType({
   definition(t) {
     t.model.id()
     t.model.title()
-    t.int('author_id')
     t.model.status()
     t.model.condition()
     t.model.isbn()
@@ -15,9 +14,10 @@ export const Book = objectType({
     t.model.price()
     t.model.description()
     t.model.rating()
-    t.string('author', { nullable: false })
-    t.string('language', { nullable: false })
-    t.string('category', { nullable: false })
+    t.field('authors', { type: 'authors' })
+    t.field('languages', { type: 'languages' })
+    t.field('categories', { type: 'categories' })
+    t.field('users', { type: 'users' })
     t.model.orders({ pagination: true })
   },
 })

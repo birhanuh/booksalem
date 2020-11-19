@@ -31,7 +31,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         });
@@ -100,7 +100,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         });
@@ -165,7 +165,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         });
@@ -175,24 +175,24 @@ export const Mutation = mutationType({
     t.field('addAuthor', {
       type: 'AuthorPayload',
       args: {
-        author: stringArg({ nullable: false })
+        name: stringArg({ nullable: false })
       },
-      resolve: async (parent, { author }, ctx) => {
+      resolve: async (parent, { name }, ctx) => {
         try {
-          const authorRes = await ctx.prisma.authors.create({
+          const author = await ctx.prisma.authors.create({
             data: {
-              author
+              name
             },
           })
 
           return {
-            author: authorRes
+            author: author
           }
         } catch (err) {
           console.log('addAuthor err: ', err)
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         }
@@ -238,7 +238,68 @@ export const Mutation = mutationType({
           console.log('addBook err: ', err)
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
+            }
+          }
+        }
+      },
+    })
+
+    t.field('updateBook', {
+      type: 'BookPayload',
+      args: {
+        bookId: intArg({ nullable: false }),
+        title: stringArg({ nullable: false }),
+        authorId: intArg(),
+        isbn: intArg(),
+        status: stringArg({ nullable: false }),
+        condition: stringArg({ nullable: false }),
+        published_date: stringArg(),
+        languageId: intArg(),
+        categoryId: intArg(),
+        price: floatArg({ nullable: false }),
+        coverFile: arg({ type: 'Upload' }),
+        description: stringArg(),
+      },
+      resolve: async (parent, { bookId, authorId, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
+        try {
+          const userId = getUserId(ctx)
+
+          let cover_url
+          console.log('FF: ', bookId, authorId, title, isbn, coverFile)
+          if (coverFile.Writable) {
+            const uploadPath = await processUpload(coverFile);
+            cover_url = process.env.SERVER_URL + uploadPath
+          } else {
+            const book = await ctx.prisma.books.findOne({
+              where: {
+                id: Number(bookId),
+              },
+            })
+            cover_url = book && book.cover_url;
+          }
+
+          const book = await ctx.prisma.books.update({
+            where: {
+              id: Number(bookId),
+            },
+            data: {
+              title, isbn, status, condition, published_date, price, cover_url, description,
+              authors: { connect: { id: Number(authorId) } },
+              languages: { connect: { id: Number(languageId) } },
+              categories: { connect: { id: Number(categoryId) } },
+              users: { connect: { id: Number(userId) } }
+            },
+          })
+
+          return {
+            book
+          }
+        } catch (err) {
+          console.log('updateBook err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         }

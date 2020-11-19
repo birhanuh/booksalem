@@ -4,7 +4,7 @@ export const Category = objectType({
   name: 'categories',
   definition(t) {
     t.model.id()
-    t.model.category()
+    t.model.name()
     t.model.books({ pagination: false })
   },
 })

@@ -4,7 +4,7 @@ export const Language = objectType({
   name: 'languages',
   definition(t) {
     t.model.id()
-    t.model.language()
+    t.model.name()
     t.model.books({ pagination: false })
   },
 })
