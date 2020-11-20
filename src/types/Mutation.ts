@@ -1,5 +1,6 @@
 import { arg, floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
 import { compare, hash } from 'bcryptjs'
+import { or } from 'graphql-shield'
 import { processUpload } from '../upload'
 import { createToken, getUserId } from '../utils'
 
@@ -30,7 +31,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         });
@@ -99,7 +100,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         });
@@ -164,18 +165,45 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         });
       }
     })
 
+    t.field('addAuthor', {
+      type: 'AuthorPayload',
+      args: {
+        name: stringArg({ nullable: false })
+      },
+      resolve: async (parent, { name }, ctx) => {
+        try {
+          const author = await ctx.prisma.authors.create({
+            data: {
+              name
+            },
+          })
+
+          return {
+            author: author
+          }
+        } catch (err) {
+          console.log('addAuthor err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target[0], message: err.message
+            }
+          }
+        }
+      },
+    })
+
     t.field('addBook', {
       type: 'BookPayload',
       args: {
         title: stringArg({ nullable: false }),
-        author: stringArg({ nullable: false }),
+        authorId: intArg({ nullable: false }),
         isbn: intArg(),
         status: stringArg({ nullable: false }),
         condition: stringArg({ nullable: false }),
@@ -186,7 +214,7 @@ export const Mutation = mutationType({
         coverFile: arg({ type: 'Upload' }),
         description: stringArg(),
       },
-      resolve: async (parent, { author, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
+      resolve: async (parent, { authorId, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
         try {
           const userId = getUserId(ctx)
 
@@ -195,7 +223,8 @@ export const Mutation = mutationType({
 
           const book = await ctx.prisma.books.create({
             data: {
-              author, title, isbn, status, condition, published_date, price, cover_url, description,
+              title, isbn, status, condition, published_date, price, cover_url, description,
+              authors: { connect: { id: Number(authorId) } },
               languages: { connect: { id: Number(languageId) } },
               categories: { connect: { id: Number(categoryId) } },
               users: { connect: { id: Number(userId) } }
@@ -209,7 +238,68 @@ export const Mutation = mutationType({
           console.log('addBook err: ', err)
           return {
             errors: {
-              path: err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target[0], message: err.message
+            }
+          }
+        }
+      },
+    })
+
+    t.field('updateBook', {
+      type: 'BookPayload',
+      args: {
+        bookId: intArg({ nullable: false }),
+        title: stringArg({ nullable: false }),
+        authorId: intArg(),
+        isbn: intArg(),
+        status: stringArg({ nullable: false }),
+        condition: stringArg({ nullable: false }),
+        published_date: stringArg(),
+        languageId: intArg(),
+        categoryId: intArg(),
+        price: floatArg({ nullable: false }),
+        coverFile: arg({ type: 'Upload' }),
+        description: stringArg(),
+      },
+      resolve: async (parent, { bookId, authorId, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
+        try {
+          const userId = getUserId(ctx)
+
+          let cover_url
+          console.log('FF: ', bookId, authorId, title, isbn, coverFile)
+          if (coverFile.Writable) {
+            const uploadPath = await processUpload(coverFile);
+            cover_url = process.env.SERVER_URL + uploadPath
+          } else {
+            const book = await ctx.prisma.books.findOne({
+              where: {
+                id: Number(bookId),
+              },
+            })
+            cover_url = book && book.cover_url;
+          }
+
+          const book = await ctx.prisma.books.update({
+            where: {
+              id: Number(bookId),
+            },
+            data: {
+              title, isbn, status, condition, published_date, price, cover_url, description,
+              authors: { connect: { id: Number(authorId) } },
+              languages: { connect: { id: Number(languageId) } },
+              categories: { connect: { id: Number(categoryId) } },
+              users: { connect: { id: Number(userId) } }
+            },
+          })
+
+          return {
+            book
+          }
+        } catch (err) {
+          console.log('updateBook err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target[0], message: err.message
             }
           }
         }
@@ -236,12 +326,12 @@ export const Mutation = mutationType({
     t.field('createCheckout', {
       type: 'checkouts',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), checkout_type: stringArg({ nullable: false }) },
-      resolve: async (parent, { orderId, price, checkout_type }, ctx) => {
+      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), type: stringArg({ nullable: false }) },
+      resolve: async (parent, { orderId, price, type }, ctx) => {
         const userId = getUserId(ctx)
         const checkout = await ctx.prisma.checkouts.create({
           data: {
-            price, checkout_type, checkout_date: new Date(), orders: { connect: { id: Number(orderId) } },
+            price, type, checkout_date: new Date(), orders: { connect: { id: Number(orderId) } },
             users: { connect: { id: Number(userId) } }
           },
         })
@@ -258,7 +348,7 @@ export const Mutation = mutationType({
         return {
           id: checkout.id,
           price: checkout.price,
-          checkout_type: checkout.checkout_type,
+          type: checkout.type,
           checkout_date: checkout.checkout_date,
           user,
           order
@@ -275,26 +365,13 @@ export const Mutation = mutationType({
 
         const order = await ctx.prisma.orders.create({
           data: {
+            order_date: new Date(),
             books: { connect: { id: Number(bookId) } },
             users: { connect: { id: Number(userId) } }
           },
         })
-        const user = await ctx.prisma.users.findOne({
-          where: {
-            id: Number(userId),
-          },
-        })
-        const book = await ctx.prisma.books.findOne({
-          where: {
-            id: Number(bookId),
-          },
-        })
 
-        return {
-          id: order.id,
-          book,
-          user
-        }
+        return order
       },
     })
   },

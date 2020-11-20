@@ -4,7 +4,7 @@ export const Checkout = objectType({
   name: 'checkouts',
   definition(t) {
     t.model.id()
-    t.model.checkout_type()
+    t.model.type()
     t.model.checkout_date()
     t.model.return_date()
     t.model.price()

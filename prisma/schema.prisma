@@ -11,7 +11,6 @@ model books {
   id             Int        @id @default(autoincrement())
   category_id    Int
   title          String     @unique
-  author         String
   status         String
   condition      String
   rating         Int?
@@ -24,6 +23,8 @@ model books {
   updated_at     DateTime   @default(now())
   cover_url      String
   language_id    Int
+  author_id      Int?
+  authors        authors?   @relation(fields: [author_id], references: [id])
   categories     categories @relation(fields: [category_id], references: [id])
   languages      languages  @relation(fields: [language_id], references: [id])
   users          users      @relation(fields: [owner_id], references: [id])
@@ -32,7 +33,7 @@ model books {
 
 model categories {
   id         Int      @id @default(autoincrement())
-  category   String   @unique
+  name       String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
   books      books[]
@@ -41,7 +42,7 @@ model categories {
 model checkouts {
   id            Int       @id @default(autoincrement())
   user_id       Int
-  checkout_type String
+  type          String
   checkout_date DateTime?
   return_date   DateTime?
   price         Float
@@ -59,6 +60,7 @@ model orders {
   id         Int         @unique @default(autoincrement())
   updated_at DateTime    @default(now())
   created_at DateTime    @default(now())
+  status     String      @default("active")
   books      books       @relation(fields: [book_id], references: [id])
   users      users       @relation(fields: [user_id], references: [id])
   checkouts  checkouts[]
@@ -83,8 +85,16 @@ model users {
 
 model languages {
   id         Int      @id @default(autoincrement())
-  language   String   @unique
+  name       String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
+  books      books[]
+}
+
+model authors {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
   books      books[]
 }

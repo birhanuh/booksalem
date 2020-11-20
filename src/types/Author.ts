@@ -1,7 +1,7 @@
 import { objectType } from '@nexus/schema'
 
-export const Category = objectType({
-  name: 'categories',
+export const Author = objectType({
+  name: 'authors',
   definition(t) {
     t.model.id()
     t.model.name()

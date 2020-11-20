@@ -19,32 +19,41 @@ export const Query = queryType({
 
     t.list.field('getAvailableBooks', {
       type: 'books',
-      resolve: async (parent, args, ctx) => {
-        return ctx.prisma.$queryRaw`SELECT books.*, languages.language, categories.category FROM books LEFT JOIN languages
-        ON books.language_id = languages.id LEFT JOIN categories
-        ON books.category_id = categories.id WHERE books.status = 'available';`
-      },
+      resolve: async (parent, args, ctx) =>
+        ctx.prisma.books.findMany({
+          include: {
+            authors: true,
+            categories: true,
+            languages: true,
+            users: true
+          }
+        })
     })
 
     t.field('getBook', {
-      type: 'BookPayload',
+      type: 'books',
       nullable: true,
       args: {
         id: intArg({ nullable: false }),
       },
-      resolve: async (parent, { id }, ctx) => {
-        const book = await ctx.prisma.$queryRaw`SELECT books.*, languages.language, categories.category FROM books LEFT JOIN languages
-          ON books.language_id = languages.id LEFT JOIN categories
-          ON books.category_id = categories.id WHERE books.id = ${Number(id)};`.then(res => res[0])
+      resolve: async (parent, { id }, ctx) =>
+        ctx.prisma.books.findOne({
+          where: {
+            id: Number(id),
+          },
+          include: {
+            authors: true,
+            categories: true,
+            languages: true,
+            users: true
+          }
+        })
+    })
 
-        const bookStructured = {
-          ...book, language: { id: book.language_id, language: book.language }, category: { id: book.category_id, category: book.category }
-        }
-
-        return {
-          book: bookStructured
-        }
-
+    t.list.field('getAuthors', {
+      type: 'authors',
+      resolve: (parent, args, ctx) => {
+        return ctx.prisma.authors.findMany();
       },
     })
 
@@ -69,7 +78,7 @@ export const Query = queryType({
       },
       resolve: (parent, { searchString }, ctx) => {
         return ctx.prisma.$queryRaw`SELECT * FROM books LEFT JOIN languages
-        ON books.language_id = languages.id LEFT JOIN categories
+        ON books.language_id = languages.id LEFT JOIN categories ON books.author_id = authors.id LEFT JOIN authors
         ON books.category_id = categories.id WHERE books.title ILIKE ${searchString} OR books.author ILIKE ${searchString} OR books.description ILIKE ${searchString};`
       },
     })
@@ -78,28 +87,36 @@ export const Query = queryType({
       type: 'orders',
       nullable: true,
       args: { orderId: intArg({ nullable: false }) },
-      resolve: async (parent, { orderId }, ctx) => {
-        const order = await ctx.prisma.orders.findOne({
+      resolve: (parent, { orderId }, ctx) => {
+        return ctx.prisma.orders.findOne({
           where: {
             id: Number(orderId),
-          },
+          }
         })
-        const user = order && await ctx.prisma.users.findOne({
+      },
+    })
+
+    t.list.field('getOrders', {
+      type: 'orders',
+      nullable: true,
+      resolve: async (parent, args, ctx) => {
+        const userId = getUserId(ctx)
+
+        const user = await ctx.prisma.users.findOne({
           where: {
-            id: Number(order.user_id),
-          },
-        })
-        const book = order && await ctx.prisma.books.findOne({
-          where: {
-            id: Number(order.book_id),
-          },
+            id: Number(userId)
+          }
         })
 
-        return {
-          id: order && order.id as any,
-          book,
-          user
+        if (user && user.is_admin) {
+          return ctx.prisma.orders.findMany()
         }
+
+        return ctx.prisma.orders.findMany({
+          where: {
+            user_id: Number(userId)
+          }
+        })
       },
     })
   },
