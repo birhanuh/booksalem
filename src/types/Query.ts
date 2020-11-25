@@ -26,6 +26,9 @@ export const Query = queryType({
             categories: true,
             languages: true,
             users: true
+          },
+          orderBy: {
+            created_at: "asc",
           }
         })
     })
@@ -96,21 +99,11 @@ export const Query = queryType({
       },
     })
 
-    t.list.field('getOrders', {
+    t.list.field('getUsersOrders', {
       type: 'orders',
       nullable: true,
       resolve: async (parent, args, ctx) => {
-        const userId = getUserId(ctx)
-
-        const user = await ctx.prisma.users.findOne({
-          where: {
-            id: Number(userId)
-          }
-        })
-
-        if (user && user.is_admin) {
-          return ctx.prisma.orders.findMany()
-        }
+        const userId = await getUserId(ctx)
 
         return ctx.prisma.orders.findMany({
           where: {
@@ -119,5 +112,38 @@ export const Query = queryType({
         })
       },
     })
-  },
+
+    t.list.field('getUsersOrdersAdmin', {
+      type: 'users',
+      nullable: true,
+      resolve: async (parent, args, ctx) =>
+        ctx.prisma.users.findMany({
+          include: {
+            orders: {
+              select: {
+                user_id: true, // Pick users where their id is found inside orders table
+              }
+            }
+          }
+        })
+    })
+
+    t.field('getUserOrdersAdmin', {
+      type: 'users',
+      args: { userId: intArg({ nullable: false }) },
+      resolve: async (parent, { userId }, ctx) =>
+        ctx.prisma.users.findOne({
+          where: {
+            id: Number(userId)
+          },
+          include: {
+            orders: {
+              select: {
+                user_id: true, // Pick users where their id is found inside orders table              
+              }
+            }
+          }
+        })
+    })
+  }
 })

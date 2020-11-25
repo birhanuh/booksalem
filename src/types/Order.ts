@@ -13,3 +13,11 @@ export const Order = objectType({
     t.model.checkouts()
   }
 })
+
+export const OrderPayload = objectType({
+  name: 'OrderPayload',
+  definition(t) {
+    t.field('order', { type: 'orders', nullable: true })
+    t.field('errors', { type: 'Errors' })
+  },
+})

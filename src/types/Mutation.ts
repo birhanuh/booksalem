@@ -31,7 +31,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta && err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
             }
           }
         });
@@ -100,7 +100,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta && err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
             }
           }
         });
@@ -151,12 +151,14 @@ export const Mutation = mutationType({
       },
       resolve: async (_parent, { password }, ctx) => {
         const userId = await getUserId(ctx)
+        const hashedPassword = await hash(password, 10)
+
         return ctx.prisma.users.update({
           where: {
             id: Number(userId),
           },
           data: {
-            password
+            password: hashedPassword
           },
         }).then(user => {
           return {
@@ -165,7 +167,7 @@ export const Mutation = mutationType({
         }).catch((err: any) => {
           return {
             errors: {
-              path: err.meta && err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
             }
           }
         });
@@ -186,13 +188,13 @@ export const Mutation = mutationType({
           })
 
           return {
-            author: author
+            author
           }
         } catch (err) {
           console.log('addAuthor err: ', err)
           return {
             errors: {
-              path: err.meta && err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
             }
           }
         }
@@ -238,7 +240,7 @@ export const Mutation = mutationType({
           console.log('addBook err: ', err)
           return {
             errors: {
-              path: err.meta && err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
             }
           }
         }
@@ -299,7 +301,7 @@ export const Mutation = mutationType({
           console.log('updateBook err: ', err)
           return {
             errors: {
-              path: err.meta && err.meta.target[0], message: err.message
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
             }
           }
         }
@@ -311,14 +313,81 @@ export const Mutation = mutationType({
       nullable: true,
       args: { id: intArg({ nullable: false }) },
       resolve: async (parent, { id }, ctx) => {
-        const book = await ctx.prisma.books.delete({
-          where: {
-            id,
-          },
-        })
+        try {
+          const book = await ctx.prisma.books.delete({
+            where: {
+              id
+            }
+          })
 
-        return {
-          book
+          return {
+            book
+          }
+        } catch (err) {
+          console.log('cancelOrder err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
+            }
+          }
+        }
+      },
+    })
+
+    t.field('createOrder', {
+      type: 'OrderPayload',
+      nullable: true,
+      args: { bookId: intArg({ nullable: false }) },
+      resolve: async (parent, { bookId }, ctx) => {
+        try {
+          const userId = getUserId(ctx)
+
+          const order = await ctx.prisma.orders.create({
+            data: {
+              order_date: new Date(),
+              books: { connect: { id: Number(bookId) } },
+              users: { connect: { id: Number(userId) } }
+            },
+          })
+
+          return {
+            order
+          }
+        } catch (err) {
+          console.log('createOrder err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
+            }
+          }
+        }
+      },
+    })
+
+    t.field('cancelOrder', {
+      type: 'OrderPayload',
+      nullable: true,
+      args: { bookId: intArg({ nullable: false }) },
+      resolve: async (parent, { bookId }, ctx) => {
+        try {
+          const userId = getUserId(ctx)
+
+          const order = await ctx.prisma.orders.delete({
+            where: {
+              user_id_book_id: { book_id: Number(bookId), user_id: Number(userId) },
+            },
+          })
+
+          return {
+            order
+          }
+        } catch (err) {
+          console.log('cancelOrder err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
+            }
+          }
         }
       },
     })
@@ -353,25 +422,6 @@ export const Mutation = mutationType({
           user,
           order
         }
-      },
-    })
-
-    t.field('createOrder', {
-      type: 'orders',
-      nullable: true,
-      args: { bookId: intArg({ nullable: false }) },
-      resolve: async (parent, { bookId }, ctx) => {
-        const userId = getUserId(ctx)
-
-        const order = await ctx.prisma.orders.create({
-          data: {
-            order_date: new Date(),
-            books: { connect: { id: Number(bookId) } },
-            users: { connect: { id: Number(userId) } }
-          },
-        })
-
-        return order
       },
     })
   },

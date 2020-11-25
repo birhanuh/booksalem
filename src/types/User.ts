@@ -14,3 +14,18 @@ export const User = objectType({
     t.model.orders({ pagination: true })
   },
 })
+
+export const UserPayload = objectType({
+  name: 'UserPayload',
+  definition(t) {
+    t.field('user', { type: 'users' })
+    t.field('errors', { type: 'Errors' })
+  },
+})
+
+export const AdminOrdresPayload = objectType({
+  name: 'AdminOrdersPayload',
+  definition(t) {
+    t.field('users', { type: 'users', nullable: true })
+  },
+})
