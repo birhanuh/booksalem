@@ -59,6 +59,11 @@ type categories {
   name: String!
 }
 
+type CheckoutPayload {
+  checkout: checkouts
+  errors: Errors
+}
+
 type checkouts {
   checkout_date: DateTime
   id: Int!
@@ -92,7 +97,7 @@ type Mutation {
   cancelOrder(bookId: Int!): OrderPayload
   checkPassword(password: String!): UserPayload
   createAccount(email: String!, name: String!, password: String!, phone: String): AuthPayload
-  createCheckout(orderId: Int!, price: Float!, returnDate: DateTime): checkouts
+  createCheckout(bookStatus: String!, note: String, orderId: Int!, orderStatus: String!, price: Float!, returnDate: DateTime): CheckoutPayload
   createOrder(bookId: Int!): OrderPayload
   deleteBook(id: Int!): BookPayload
   signIn(email: String!, password: String!): AuthPayload
@@ -124,15 +129,17 @@ input ordersWhereUniqueInput {
 
 type Query {
   filterBooks(searchString: String): [books]
+  getAllCheckouts: [users]
+  getAllOrders: [users]
   getAuthors: [authors]
   getAvailableBooks: [books]
   getBook(id: Int!): books
   getCategories: [categories]
   getLanguages: [languages]
   getOrderById(id: Int!): orders
-  getUserOrdersAdmin(userId: Int!): users
-  getUsersOrders: [orders]
-  getUsersOrdersAdmin: [users]
+  getUserCheckouts: users
+  getUserOrders: [orders]
+  getUserOrdersById(userId: Int!): users
   me: users
 }
 

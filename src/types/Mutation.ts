@@ -426,33 +426,55 @@ export const Mutation = mutationType({
     })
 
     t.field('createCheckout', {
-      type: 'checkouts',
+      type: 'CheckoutPayload',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), returnDate: arg({ type: 'DateTime' }) },
-      resolve: async (parent, { orderId, price, returnDate }, ctx) => {
-        const userId = getUserId(ctx)
-        const checkout = await ctx.prisma.checkouts.create({
-          data: {
-            price, checkout_date: new Date(), return_date: returnDate, orders: { connect: { id: Number(orderId) } },
-            users: { connect: { id: Number(userId) } }
-          },
-        })
-        const order = await ctx.prisma.orders.findOne({
-          where: {
-            id: Number(checkout.order_id),
-          },
-        })
-        const user = await ctx.prisma.users.findOne({
-          where: {
-            id: Number(userId),
-          },
-        })
-        return {
-          id: checkout.id,
-          price: checkout.price,
-          checkout_date: checkout.checkout_date,
-          user,
-          order
+      args: { orderId: intArg({ nullable: false }), bookStatus: stringArg({ nullable: false }), orderStatus: stringArg({ nullable: false }), price: floatArg({ nullable: false }), returnDate: arg({ type: 'DateTime' }), note: stringArg() },
+      resolve: async (parent, { orderId, bookStatus, orderStatus, price, returnDate, note }, ctx) => {
+        try {
+          const userId = getUserId(ctx)
+
+          const checkout = await ctx.prisma.checkouts.create({
+            data: {
+              price, checkout_date: new Date(), return_date: returnDate,
+              orders: { connect: { id: Number(orderId) } },
+              users: { connect: { id: Number(userId) } }
+            },
+          })
+
+          // After checkouts.create is successful update orders
+          if (checkout) {
+            const order = await ctx.prisma.orders.update({
+              where: {
+                id: Number(orderId),
+              },
+              data: {
+                status: orderStatus
+              },
+            })
+
+            // After orders.update is successful update books
+            if (order) {
+              ctx.prisma.books.update({
+                where: {
+                  id: Number(order.book_id),
+                },
+                data: {
+                  status: bookStatus
+                },
+              })
+            }
+          }
+
+          return {
+            checkout
+          }
+        } catch (err) {
+          console.log('createCheckout err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
+            }
+          }
         }
       },
     })

@@ -11,3 +11,11 @@ export const Checkout = objectType({
     t.model.users()
   },
 })
+
+export const CheckoutPayload = objectType({
+  name: 'CheckoutPayload',
+  definition(t) {
+    t.field('checkout', { type: 'checkouts', nullable: true })
+    t.field('errors', { type: 'Errors' })
+  },
+})
