@@ -43,6 +43,7 @@ type books {
   rating: Int
   status: String!
   title: String!
+  type: String
   users: users
 }
 
@@ -64,7 +65,6 @@ type checkouts {
   orders: orders
   price: Float!
   return_date: DateTime
-  type: String!
   users: users!
 }
 
@@ -88,15 +88,15 @@ type languages {
 
 type Mutation {
   addAuthor(name: String!): AuthorPayload
-  addBook(authorId: Int!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
+  addBook(authorId: Int!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, publishedDate: String, status: String!, title: String!, type: String): BookPayload
   cancelOrder(bookId: Int!): OrderPayload
   checkPassword(password: String!): UserPayload
   createAccount(email: String!, name: String!, password: String!, phone: String): AuthPayload
-  createCheckout(orderId: Int!, price: Float!, type: String!): checkouts
+  createCheckout(orderId: Int!, price: Float!, returnDate: DateTime): checkouts
   createOrder(bookId: Int!): OrderPayload
   deleteBook(id: Int!): BookPayload
   signIn(email: String!, password: String!): AuthPayload
-  updateBook(authorId: Int, bookId: Int!, categoryId: Int, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int, price: Float!, published_date: String, status: String!, title: String!): BookPayload
+  updateBook(authorId: Int, bookId: Int!, categoryId: Int, condition: String, coverFile: Upload, description: String, isbn: Int, languageId: Int, price: Float, publishedDate: String, status: String, title: String, type: String): BookPayload
   updatePassword(password: String!): UserPayload
   updateProfile(email: String!, name: String!, phone: String): UserPayload
 }
@@ -129,7 +129,7 @@ type Query {
   getBook(id: Int!): books
   getCategories: [categories]
   getLanguages: [languages]
-  getOrder(orderId: Int!): orders
+  getOrderById(id: Int!): orders
   getUserOrdersAdmin(userId: Int!): users
   getUsersOrders: [orders]
   getUsersOrdersAdmin: [users]

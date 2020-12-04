@@ -28,7 +28,7 @@ export const Query = queryType({
             users: true
           },
           orderBy: {
-            created_at: "asc",
+            created_at: "desc",
           }
         })
     })
@@ -56,7 +56,11 @@ export const Query = queryType({
     t.list.field('getAuthors', {
       type: 'authors',
       resolve: (parent, args, ctx) => {
-        return ctx.prisma.authors.findMany();
+        return ctx.prisma.authors.findMany({
+          orderBy: {
+            created_at: "desc",
+          }
+        });
       },
     })
 
@@ -86,14 +90,14 @@ export const Query = queryType({
       },
     })
 
-    t.field('getOrder', {
+    t.field('getOrderById', {
       type: 'orders',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }) },
-      resolve: (parent, { orderId }, ctx) => {
+      args: { id: intArg({ nullable: false }) },
+      resolve: (parent, { id }, ctx) => {
         return ctx.prisma.orders.findOne({
           where: {
-            id: Number(orderId),
+            id: Number(id),
           }
         })
       },

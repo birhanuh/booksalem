@@ -7,6 +7,7 @@ export const Book = objectType({
     t.model.id()
     t.model.title()
     t.model.status()
+    t.model.type()
     t.model.condition()
     t.model.isbn()
     t.model.published_date()

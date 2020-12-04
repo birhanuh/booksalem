@@ -1,6 +1,6 @@
 import { arg, floatArg, intArg, mutationType, stringArg } from '@nexus/schema'
+import { books } from '@prisma/client'
 import { compare, hash } from 'bcryptjs'
-import { or } from 'graphql-shield'
 import { processUpload } from '../upload'
 import { createToken, getUserId } from '../utils'
 
@@ -208,15 +208,16 @@ export const Mutation = mutationType({
         authorId: intArg({ nullable: false }),
         isbn: intArg(),
         status: stringArg({ nullable: false }),
+        type: stringArg(),
         condition: stringArg({ nullable: false }),
-        published_date: stringArg(),
+        publishedDate: stringArg(),
         languageId: intArg({ nullable: false }),
         categoryId: intArg({ nullable: false }),
         price: floatArg({ nullable: false }),
         coverFile: arg({ type: 'Upload' }),
         description: stringArg(),
       },
-      resolve: async (parent, { authorId, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
+      resolve: async (parent, { authorId, title, isbn, status, type, condition, publishedDate, languageId, categoryId, price, coverFile, description }, ctx) => {
         try {
           const userId = getUserId(ctx)
 
@@ -225,12 +226,13 @@ export const Mutation = mutationType({
 
           const book = await ctx.prisma.books.create({
             data: {
-              title, isbn, status, condition, published_date, price, cover_url, description,
+              title, isbn, status, type, condition, published_date: publishedDate, price, cover_url, description,
               authors: { connect: { id: Number(authorId) } },
               languages: { connect: { id: Number(languageId) } },
               categories: { connect: { id: Number(categoryId) } },
               users: { connect: { id: Number(userId) } }
             },
+            include: { authors: true, languages: true, categories: true, users: true }
           })
 
           return {
@@ -251,47 +253,78 @@ export const Mutation = mutationType({
       type: 'BookPayload',
       args: {
         bookId: intArg({ nullable: false }),
-        title: stringArg({ nullable: false }),
+        title: stringArg(),
         authorId: intArg(),
         isbn: intArg(),
-        status: stringArg({ nullable: false }),
-        condition: stringArg({ nullable: false }),
-        published_date: stringArg(),
+        status: stringArg(),
+        type: stringArg(),
+        condition: stringArg(),
+        publishedDate: stringArg(),
         languageId: intArg(),
         categoryId: intArg(),
-        price: floatArg({ nullable: false }),
+        price: floatArg(),
         coverFile: arg({ type: 'Upload' }),
         description: stringArg(),
       },
-      resolve: async (parent, { bookId, authorId, title, isbn, status, condition, published_date, languageId, categoryId, price, coverFile, description }, ctx) => {
+      resolve: async (parent, { bookId, authorId, title, isbn, status, type, condition, publishedDate, languageId, categoryId, price, coverFile, description }, ctx) => {
         try {
-          const userId = getUserId(ctx)
+          const data: any = {}
 
-          let cover_url
-          console.log('FF: ', bookId, authorId, title, isbn, coverFile)
-          if (coverFile.Writable) {
+          if (title) {
+            data.title = title
+          }
+
+          if (isbn) {
+            data.isbn = isbn
+          }
+
+          if (status) {
+            data.status = status
+          }
+
+          if (type) {
+            data.type = type
+          }
+
+          if (condition) {
+            data.condition = condition
+          }
+
+          if (publishedDate) {
+            data.published_date = publishedDate
+          }
+
+          if (price) {
+            data.price = price
+          }
+
+          if (description) {
+            data.description = description
+          }
+
+          if (!!coverFile) {
             const uploadPath = await processUpload(coverFile);
-            cover_url = process.env.SERVER_URL + uploadPath
-          } else {
-            const book = await ctx.prisma.books.findOne({
-              where: {
-                id: Number(bookId),
-              },
-            })
-            cover_url = book && book.cover_url;
+            data.cover_url = process.env.SERVER_URL + uploadPath
+          }
+
+          if (authorId) {
+            data.authors = { connect: { id: Number(authorId) } };
+          }
+
+          if (languageId) {
+            data.languages = { connect: { id: Number(languageId) } };
+          }
+
+          if (categoryId) {
+            data.categories = { connect: { id: Number(categoryId) } };
           }
 
           const book = await ctx.prisma.books.update({
             where: {
               id: Number(bookId),
             },
-            data: {
-              title, isbn, status, condition, published_date, price, cover_url, description,
-              authors: { connect: { id: Number(authorId) } },
-              languages: { connect: { id: Number(languageId) } },
-              categories: { connect: { id: Number(categoryId) } },
-              users: { connect: { id: Number(userId) } }
-            },
+            data,
+            include: { authors: true, languages: true, categories: true, users: true }
           })
 
           return {
@@ -395,12 +428,12 @@ export const Mutation = mutationType({
     t.field('createCheckout', {
       type: 'checkouts',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), type: stringArg({ nullable: false }) },
-      resolve: async (parent, { orderId, price, type }, ctx) => {
+      args: { orderId: intArg({ nullable: false }), price: floatArg({ nullable: false }), returnDate: arg({ type: 'DateTime' }) },
+      resolve: async (parent, { orderId, price, returnDate }, ctx) => {
         const userId = getUserId(ctx)
         const checkout = await ctx.prisma.checkouts.create({
           data: {
-            price, type, checkout_date: new Date(), orders: { connect: { id: Number(orderId) } },
+            price, checkout_date: new Date(), return_date: returnDate, orders: { connect: { id: Number(orderId) } },
             users: { connect: { id: Number(userId) } }
           },
         })
@@ -417,7 +450,6 @@ export const Mutation = mutationType({
         return {
           id: checkout.id,
           price: checkout.price,
-          type: checkout.type,
           checkout_date: checkout.checkout_date,
           user,
           order

@@ -24,6 +24,7 @@ model books {
   cover_url      String
   language_id    Int
   author_id      Int?
+  type           String?    @default("rent")
   authors        authors?   @relation(fields: [author_id], references: [id])
   categories     categories @relation(fields: [category_id], references: [id])
   languages      languages  @relation(fields: [language_id], references: [id])
@@ -41,16 +42,16 @@ model categories {
 
 model checkouts {
   id            Int       @id @default(autoincrement())
-  user_id       Int
-  type          String
+  owner_id      Int
   checkout_date DateTime?
   return_date   DateTime?
   price         Float
   order_id      Int?
   created_at    DateTime  @default(now())
   updated_at    DateTime  @default(now())
+  note          String?
   orders        orders?   @relation(fields: [order_id], references: [id])
-  users         users     @relation(fields: [user_id], references: [id])
+  users         users     @relation(fields: [owner_id], references: [id])
 }
 
 model orders {
