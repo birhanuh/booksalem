@@ -1,5 +1,6 @@
 import { intArg, queryType, stringArg } from '@nexus/schema'
 import { compare } from 'bcryptjs'
+import { or } from 'graphql-shield'
 import { getUserId } from '../utils'
 
 export const Query = queryType({
@@ -118,16 +119,43 @@ export const Query = queryType({
     t.list.field('getAllOrders', {
       type: 'users',
       nullable: true,
-      resolve: async (parent, args, ctx) =>
+      resolve: async (parent, args, ctx) => {
+        /**
         ctx.prisma.users.findMany({
           include: {
             orders: {
               select: {
-                user_id: true, // Pick users where their id is found inside orders table
+                user_id: true, // Pick users where their id is found inside orders table              
               }
             }
           }
         })
+        */
+
+        const orders = await ctx.prisma.orders.findMany({
+          where: { status: { not: 'closed' } },
+          include: {
+            users: true,
+          }
+        })
+
+        const uniqueUsers: any = {};
+
+        // group by user
+        orders.forEach(order => {
+          if (uniqueUsers[order.user_id]) {
+            uniqueUsers[order.user_id]['orders'].push(order)
+          } else {
+            uniqueUsers[order.user_id] = {
+              ...order.users, 'orders': [order]
+            }
+          }
+        });
+
+        const users = Object.keys(uniqueUsers).map(key => uniqueUsers[key]);
+
+        return users
+      }
     })
 
     t.field('getUserOrdersById', {
@@ -140,9 +168,7 @@ export const Query = queryType({
           },
           include: {
             orders: {
-              select: {
-                user_id: true, // Pick users where their id is found inside orders table              
-              }
+              where: { status: { not: 'closed' } }, // Doesn't seem to affect. Thus, filtering is done on client side.
             }
           }
         })
@@ -187,16 +213,12 @@ export const Query = queryType({
     })
 
     t.list.field('getAllCheckouts', {
-      type: 'users',
+      type: 'checkouts',
       nullable: true,
       resolve: async (parent, args, ctx) =>
-        ctx.prisma.users.findMany({
+        ctx.prisma.checkouts.findMany({
           include: {
-            checkouts: {
-              select: {
-                order_id: true, // Pick users where their id is found inside checkouts table
-              }
-            }
+            orders: true
           }
         })
     })

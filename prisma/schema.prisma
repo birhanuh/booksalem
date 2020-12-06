@@ -45,7 +45,7 @@ model checkouts {
   owner_id      Int
   checkout_date DateTime?
   return_date   DateTime?
-  price         Float
+  total_price   Float
   order_id      Int?
   created_at    DateTime  @default(now())
   updated_at    DateTime  @default(now())

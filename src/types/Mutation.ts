@@ -428,14 +428,14 @@ export const Mutation = mutationType({
     t.field('createCheckout', {
       type: 'CheckoutPayload',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }), bookStatus: stringArg({ nullable: false }), orderStatus: stringArg({ nullable: false }), price: floatArg({ nullable: false }), returnDate: arg({ type: 'DateTime' }), note: stringArg() },
-      resolve: async (parent, { orderId, bookStatus, orderStatus, price, returnDate, note }, ctx) => {
+      args: { orderId: intArg({ nullable: false }), bookStatus: stringArg({ nullable: false }), orderStatus: stringArg({ nullable: false }), totalPrice: floatArg({ nullable: false }), returnDate: arg({ type: 'DateTime' }), note: stringArg() },
+      resolve: async (parent, { orderId, bookStatus, orderStatus, totalPrice, returnDate, note }, ctx) => {
         try {
           const userId = getUserId(ctx)
 
           const checkout = await ctx.prisma.checkouts.create({
             data: {
-              price, checkout_date: new Date(), return_date: returnDate,
+              total_price: totalPrice, checkout_date: new Date(), return_date: returnDate,
               orders: { connect: { id: Number(orderId) } },
               users: { connect: { id: Number(userId) } }
             },
@@ -449,12 +449,12 @@ export const Mutation = mutationType({
               },
               data: {
                 status: orderStatus
-              },
+              }
             })
 
             // After orders.update is successful update books
             if (order) {
-              ctx.prisma.books.update({
+              await ctx.prisma.books.update({
                 where: {
                   id: Number(order.book_id),
                 },
