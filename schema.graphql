@@ -67,6 +67,7 @@ type CheckoutPayload {
 type checkouts {
   checkout_date: DateTime
   id: Int!
+  note: String
   orders: orders
   return_date: DateTime
   total_price: Float!
@@ -102,6 +103,7 @@ type Mutation {
   deleteBook(id: Int!): BookPayload
   signIn(email: String!, password: String!): AuthPayload
   updateBook(authorId: Int, bookId: Int!, categoryId: Int, condition: String, coverFile: Upload, description: String, isbn: Int, languageId: Int, price: Float, publishedDate: String, status: String, title: String, type: String): BookPayload
+  updateCheckout(bookStatus: String, checkoutId: Int!, note: String, returnDate: DateTime, totalPrice: Float): CheckoutPayload
   updatePassword(password: String!): UserPayload
   updateProfile(email: String!, name: String!, phone: String): UserPayload
 }
@@ -135,10 +137,10 @@ type Query {
   getAvailableBooks: [books]
   getBook(id: Int!): books
   getCategories: [categories]
+  getCheckoutById(id: Int!): checkouts
   getLanguages: [languages]
   getOrderById(id: Int!): orders
   getUserCheckouts: users
-  getUserCheckoutsById(userId: Int!): users
   getUserOrders: [orders]
   getUserOrdersById(userId: Int!): users
   me: users

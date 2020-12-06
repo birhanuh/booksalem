@@ -435,7 +435,7 @@ export const Mutation = mutationType({
 
           const checkout = await ctx.prisma.checkouts.create({
             data: {
-              total_price: totalPrice, checkout_date: new Date(), return_date: returnDate,
+              total_price: totalPrice, checkout_date: new Date(), return_date: returnDate, note,
               orders: { connect: { id: Number(orderId) } },
               users: { connect: { id: Number(userId) } }
             },
@@ -478,5 +478,65 @@ export const Mutation = mutationType({
         }
       },
     })
+
+    t.field('updateCheckout', {
+      type: 'CheckoutPayload',
+      args: {
+        checkoutId: intArg({ nullable: false }),
+        bookStatus: stringArg(),
+        returnDate: arg({ type: 'DateTime' }),
+        totalPrice: floatArg(),
+        note: stringArg(),
+      },
+      resolve: async (parent, { checkoutId, bookStatus, returnDate, totalPrice, note }, ctx) => {
+        try {
+          const data: any = {}
+
+          if (returnDate) {
+            data.return_date = returnDate
+          }
+
+          if (totalPrice) {
+            data.total_price = totalPrice
+          }
+
+          if (note) {
+            data.note = note
+          }
+
+          const checkout = await ctx.prisma.checkouts.update({
+            where: {
+              id: Number(checkoutId),
+            },
+            data,
+            include: { orders: true }
+          })
+
+          // After orders.update is successful update books
+          if (checkout.orders && bookStatus) {
+            await ctx.prisma.books.update({
+              where: {
+                id: Number(checkout.orders.book_id),
+              },
+              data: {
+                status: bookStatus
+              },
+            })
+          }
+
+          return {
+            checkout
+          }
+        } catch (err) {
+          console.log('updateCheckout err: ', err)
+          return {
+            errors: {
+              path: err.meta && err.meta.target ? err.meta.target[0] : err.meta.details, message: err.message
+            }
+          }
+        }
+      },
+    })
+
   },
 })
