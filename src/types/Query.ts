@@ -1,5 +1,6 @@
 import { intArg, queryType, stringArg } from '@nexus/schema'
 import { compare } from 'bcryptjs'
+import { or } from 'graphql-shield'
 import { getUserId } from '../utils'
 
 export const Query = queryType({
@@ -28,7 +29,7 @@ export const Query = queryType({
             users: true
           },
           orderBy: {
-            created_at: "asc",
+            created_at: "desc",
           }
         })
     })
@@ -56,7 +57,11 @@ export const Query = queryType({
     t.list.field('getAuthors', {
       type: 'authors',
       resolve: (parent, args, ctx) => {
-        return ctx.prisma.authors.findMany();
+        return ctx.prisma.authors.findMany({
+          orderBy: {
+            created_at: "desc",
+          }
+        });
       },
     })
 
@@ -86,20 +91,18 @@ export const Query = queryType({
       },
     })
 
-    t.field('getOrder', {
+    t.field('getOrderById', {
       type: 'orders',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }) },
-      resolve: (parent, { orderId }, ctx) => {
-        return ctx.prisma.orders.findOne({
-          where: {
-            id: Number(orderId),
-          }
-        })
-      },
+      args: { id: intArg({ nullable: false }) },
+      resolve: (parent, { id }, ctx) => ctx.prisma.orders.findOne({
+        where: {
+          id: Number(id),
+        }
+      })
     })
 
-    t.list.field('getUsersOrders', {
+    t.list.field('getUserOrders', {
       type: 'orders',
       nullable: true,
       resolve: async (parent, args, ctx) => {
@@ -113,22 +116,49 @@ export const Query = queryType({
       },
     })
 
-    t.list.field('getUsersOrdersAdmin', {
+    t.list.field('getAllOrders', {
       type: 'users',
       nullable: true,
-      resolve: async (parent, args, ctx) =>
+      resolve: async (parent, args, ctx) => {
+        /**
         ctx.prisma.users.findMany({
           include: {
             orders: {
               select: {
-                user_id: true, // Pick users where their id is found inside orders table
+                user_id: true, // Pick users where their id is found inside orders table              
               }
             }
           }
         })
+        */
+
+        const orders = await ctx.prisma.orders.findMany({
+          where: { status: { not: 'closed' } },
+          include: {
+            users: true,
+          }
+        })
+
+        const uniqueUsers: any = {};
+
+        // group by user
+        orders.forEach(order => {
+          if (uniqueUsers[order.user_id]) {
+            uniqueUsers[order.user_id]['orders'].push(order)
+          } else {
+            uniqueUsers[order.user_id] = {
+              ...order.users, 'orders': [order]
+            }
+          }
+        });
+
+        const users = Object.keys(uniqueUsers).map(key => uniqueUsers[key]);
+
+        return users
+      }
     })
 
-    t.field('getUserOrdersAdmin', {
+    t.field('getUserOrdersById', {
       type: 'users',
       args: { userId: intArg({ nullable: false }) },
       resolve: async (parent, { userId }, ctx) =>
@@ -138,10 +168,50 @@ export const Query = queryType({
           },
           include: {
             orders: {
-              select: {
-                user_id: true, // Pick users where their id is found inside orders table              
-              }
+              where: { status: { not: 'closed' } }, // Doesn't seem to affect. Thus, filtering is done on client side.
             }
+          }
+        })
+    })
+
+    t.field('getUserCheckouts', {
+      type: 'users',
+      nullable: true,
+      resolve: async (parent, args, ctx) => {
+        const userId = await getUserId(ctx)
+
+        return ctx.prisma.users.findOne({
+          where: {
+            id: Number(userId)
+          },
+          include: {
+            orders: true
+          }
+        })
+      }
+    })
+
+    t.field('getCheckoutById', {
+      type: 'checkouts',
+      args: { id: intArg({ nullable: false }) },
+      resolve: async (parent, { id }, ctx) => ctx.prisma.checkouts.findOne({
+        where: {
+          id: Number(id)
+        },
+        include: {
+          users: true,
+          orders: true
+        }
+      })
+    })
+
+    t.list.field('getAllCheckouts', {
+      type: 'checkouts',
+      nullable: true,
+      resolve: async (parent, args, ctx) =>
+        ctx.prisma.checkouts.findMany({
+          include: {
+            orders: true
           }
         })
     })

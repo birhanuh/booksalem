@@ -43,6 +43,7 @@ type books {
   rating: Int
   status: String!
   title: String!
+  type: String
   users: users
 }
 
@@ -58,13 +59,19 @@ type categories {
   name: String!
 }
 
+type CheckoutPayload {
+  checkout: checkouts
+  errors: Errors
+}
+
 type checkouts {
   checkout_date: DateTime
   id: Int!
+  note: String
   orders: orders
-  price: Float!
   return_date: DateTime
-  type: String!
+  status: String!
+  total_price: Float!
   users: users!
 }
 
@@ -88,15 +95,16 @@ type languages {
 
 type Mutation {
   addAuthor(name: String!): AuthorPayload
-  addBook(authorId: Int!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, published_date: String, status: String!, title: String!): BookPayload
+  addBook(authorId: Int!, categoryId: Int!, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int!, price: Float!, publishedDate: String, status: String!, title: String!, type: String): BookPayload
   cancelOrder(bookId: Int!): OrderPayload
   checkPassword(password: String!): UserPayload
   createAccount(email: String!, name: String!, password: String!, phone: String): AuthPayload
-  createCheckout(orderId: Int!, price: Float!, type: String!): checkouts
+  createCheckout(bookStatus: String!, note: String, orderId: Int!, orderStatus: String!, returnDate: DateTime, status: String!, totalPrice: Float!): CheckoutPayload
   createOrder(bookId: Int!): OrderPayload
   deleteBook(id: Int!): BookPayload
   signIn(email: String!, password: String!): AuthPayload
-  updateBook(authorId: Int, bookId: Int!, categoryId: Int, condition: String!, coverFile: Upload, description: String, isbn: Int, languageId: Int, price: Float!, published_date: String, status: String!, title: String!): BookPayload
+  updateBook(authorId: Int, bookId: Int!, categoryId: Int, condition: String, coverFile: Upload, description: String, isbn: Int, languageId: Int, price: Float, publishedDate: String, status: String, title: String, type: String): BookPayload
+  updateCheckout(bookStatus: String, checkoutId: Int!, note: String, returnDate: DateTime, status: String!, totalPrice: Float): CheckoutPayload
   updatePassword(password: String!): UserPayload
   updateProfile(email: String!, name: String!, phone: String): UserPayload
 }
@@ -124,15 +132,18 @@ input ordersWhereUniqueInput {
 
 type Query {
   filterBooks(searchString: String): [books]
+  getAllCheckouts: [checkouts]
+  getAllOrders: [users]
   getAuthors: [authors]
   getAvailableBooks: [books]
   getBook(id: Int!): books
   getCategories: [categories]
+  getCheckoutById(id: Int!): checkouts
   getLanguages: [languages]
-  getOrder(orderId: Int!): orders
-  getUserOrdersAdmin(userId: Int!): users
-  getUsersOrders: [orders]
-  getUsersOrdersAdmin: [users]
+  getOrderById(id: Int!): orders
+  getUserCheckouts: users
+  getUserOrders: [orders]
+  getUserOrdersById(userId: Int!): users
   me: users
 }
 
@@ -151,6 +162,7 @@ type UserPayload {
 
 type users {
   books(after: booksWhereUniqueInput, before: booksWhereUniqueInput, first: Int, last: Int): [books!]!
+  checkouts(after: checkoutsWhereUniqueInput, before: checkoutsWhereUniqueInput, first: Int, last: Int): [checkouts!]!
   email: String!
   id: Int!
   is_admin: Boolean!
