@@ -141,7 +141,7 @@ type Query {
   getCheckoutById(id: Int!): checkouts
   getLanguages: [languages]
   getOrderById(id: Int!): orders
-  getUserCheckouts: users
+  getUserCheckouts: [checkouts]
   getUserOrders: [orders]
   getUserOrdersById(userId: Int!): users
   me: users

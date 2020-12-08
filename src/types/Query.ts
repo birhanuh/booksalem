@@ -27,7 +27,6 @@ export const Query = queryType({
 
         if (searchString !== '') {
           data = {
-            ...data,
             OR: [{ title: { contains: searchString } }, { description: { contains: searchString } }, { authors: { name: { contains: searchString } } },
             { categories: { name: { contains: searchString } } }, { languages: { name: { contains: searchString } } }]
 
@@ -189,16 +188,14 @@ export const Query = queryType({
         })
     })
 
-    t.field('getUserCheckouts', {
-      type: 'users',
+    t.list.field('getUserCheckouts', {
+      type: 'checkouts',
       nullable: true,
       resolve: async (parent, args, ctx) => {
         const userId = await getUserId(ctx)
 
-        return ctx.prisma.users.findOne({
-          where: {
-            id: Number(userId)
-          },
+        return ctx.prisma.checkouts.findMany({
+          where: { orders: { user_id: Number(userId) } },
           include: {
             orders: true
           }
