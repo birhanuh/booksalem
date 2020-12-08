@@ -50,6 +50,7 @@ model checkouts {
   created_at    DateTime  @default(now())
   updated_at    DateTime  @default(now())
   note          String?
+  status        String    @default("open")
   orders        orders?   @relation(fields: [order_id], references: [id])
   users         users     @relation(fields: [owner_id], references: [id])
 }

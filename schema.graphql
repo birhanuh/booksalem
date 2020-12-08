@@ -70,6 +70,7 @@ type checkouts {
   note: String
   orders: orders
   return_date: DateTime
+  status: String!
   total_price: Float!
   users: users!
 }
@@ -98,12 +99,12 @@ type Mutation {
   cancelOrder(bookId: Int!): OrderPayload
   checkPassword(password: String!): UserPayload
   createAccount(email: String!, name: String!, password: String!, phone: String): AuthPayload
-  createCheckout(bookStatus: String!, note: String, orderId: Int!, orderStatus: String!, returnDate: DateTime, totalPrice: Float!): CheckoutPayload
+  createCheckout(bookStatus: String!, note: String, orderId: Int!, orderStatus: String!, returnDate: DateTime, status: String!, totalPrice: Float!): CheckoutPayload
   createOrder(bookId: Int!): OrderPayload
   deleteBook(id: Int!): BookPayload
   signIn(email: String!, password: String!): AuthPayload
   updateBook(authorId: Int, bookId: Int!, categoryId: Int, condition: String, coverFile: Upload, description: String, isbn: Int, languageId: Int, price: Float, publishedDate: String, status: String, title: String, type: String): BookPayload
-  updateCheckout(bookStatus: String, checkoutId: Int!, note: String, returnDate: DateTime, totalPrice: Float): CheckoutPayload
+  updateCheckout(bookStatus: String, checkoutId: Int!, note: String, returnDate: DateTime, status: String!, totalPrice: Float): CheckoutPayload
   updatePassword(password: String!): UserPayload
   updateProfile(email: String!, name: String!, phone: String): UserPayload
 }
@@ -161,6 +162,7 @@ type UserPayload {
 
 type users {
   books(after: booksWhereUniqueInput, before: booksWhereUniqueInput, first: Int, last: Int): [books!]!
+  checkouts(after: checkoutsWhereUniqueInput, before: checkoutsWhereUniqueInput, first: Int, last: Int): [checkouts!]!
   email: String!
   id: Int!
   is_admin: Boolean!

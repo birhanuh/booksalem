@@ -185,11 +185,7 @@ export const Query = queryType({
             id: Number(userId)
           },
           include: {
-            checkouts: {
-              select: {
-                order_id: true, // Pick users where their id is found inside checkouts table              
-              }
-            }
+            orders: true
           }
         })
       }

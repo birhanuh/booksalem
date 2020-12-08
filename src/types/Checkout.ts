@@ -6,6 +6,7 @@ export const Checkout = objectType({
     t.model.id()
     t.model.checkout_date()
     t.model.return_date()
+    t.model.status()
     t.model.note()
     t.model.total_price()
     t.model.orders()

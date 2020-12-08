@@ -428,14 +428,17 @@ export const Mutation = mutationType({
     t.field('createCheckout', {
       type: 'CheckoutPayload',
       nullable: true,
-      args: { orderId: intArg({ nullable: false }), bookStatus: stringArg({ nullable: false }), orderStatus: stringArg({ nullable: false }), totalPrice: floatArg({ nullable: false }), returnDate: arg({ type: 'DateTime' }), note: stringArg() },
-      resolve: async (parent, { orderId, bookStatus, orderStatus, totalPrice, returnDate, note }, ctx) => {
+      args: {
+        orderId: intArg({ nullable: false }), bookStatus: stringArg({ nullable: false }), orderStatus: stringArg({ nullable: false }),
+        totalPrice: floatArg({ nullable: false }), returnDate: arg({ type: 'DateTime' }), status: stringArg({ nullable: false }), note: stringArg()
+      },
+      resolve: async (parent, { orderId, bookStatus, orderStatus, totalPrice, returnDate, status, note }, ctx) => {
         try {
           const userId = getUserId(ctx)
 
           const checkout = await ctx.prisma.checkouts.create({
             data: {
-              total_price: totalPrice, checkout_date: new Date(), return_date: returnDate, note,
+              total_price: totalPrice, checkout_date: new Date(), return_date: returnDate, status, note,
               orders: { connect: { id: Number(orderId) } },
               users: { connect: { id: Number(userId) } }
             },
@@ -486,9 +489,10 @@ export const Mutation = mutationType({
         bookStatus: stringArg(),
         returnDate: arg({ type: 'DateTime' }),
         totalPrice: floatArg(),
+        status: stringArg({ nullable: false }),
         note: stringArg(),
       },
-      resolve: async (parent, { checkoutId, bookStatus, returnDate, totalPrice, note }, ctx) => {
+      resolve: async (parent, { checkoutId, bookStatus, returnDate, totalPrice, status, note }, ctx) => {
         try {
           const data: any = {}
 
@@ -498,6 +502,10 @@ export const Mutation = mutationType({
 
           if (totalPrice) {
             data.total_price = totalPrice
+          }
+
+          if (status) {
+            data.status = status
           }
 
           if (note) {

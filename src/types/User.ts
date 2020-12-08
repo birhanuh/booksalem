@@ -12,6 +12,7 @@ export const User = objectType({
     t.model.last_sign_in()
     t.model.books({ pagination: true })
     t.model.orders({ pagination: true })
+    t.model.checkouts({ pagination: true })
   },
 })
 
