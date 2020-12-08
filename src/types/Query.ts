@@ -1,6 +1,4 @@
 import { intArg, queryType, stringArg } from '@nexus/schema'
-import { compare } from 'bcryptjs'
-import { or } from 'graphql-shield'
 import { getUserId } from '../utils'
 
 export const Query = queryType({
@@ -20,8 +18,24 @@ export const Query = queryType({
 
     t.list.field('getAvailableBooks', {
       type: 'books',
-      resolve: async (parent, args, ctx) =>
-        ctx.prisma.books.findMany({
+      args: {
+        searchString: stringArg({ nullable: true }),
+        typeCode: intArg({ nullable: true }),
+      },
+      resolve: async (parent, { searchString, typeCode }, ctx) => {
+        let data: any = {};
+
+        if (searchString !== '') {
+          data = {
+            ...data,
+            OR: [{ title: { contains: searchString } }, { description: { contains: searchString } }, { authors: { name: { contains: searchString } } },
+            { categories: { name: { contains: searchString } } }, { languages: { name: { contains: searchString } } }]
+
+          }
+        }
+
+        return ctx.prisma.books.findMany({
+          where: { ...data, type: typeCode === 0 ? 'rent' : 'sell' },
           include: {
             authors: true,
             categories: true,
@@ -32,6 +46,7 @@ export const Query = queryType({
             created_at: "desc",
           }
         })
+      }
     })
 
     t.field('getBook', {

@@ -135,7 +135,7 @@ type Query {
   getAllCheckouts: [checkouts]
   getAllOrders: [users]
   getAuthors: [authors]
-  getAvailableBooks: [books]
+  getAvailableBooks(searchString: String, typeCode: Int): [books]
   getBook(id: Int!): books
   getCategories: [categories]
   getCheckoutById(id: Int!): checkouts
