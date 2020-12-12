@@ -19,22 +19,24 @@ export const Query = queryType({
     t.list.field('getAvailableBooks', {
       type: 'books',
       args: {
-        searchString: stringArg({ nullable: true }),
-        typeCode: intArg({ nullable: true }),
+        searchString: stringArg(),
+        typeCode: intArg(),
+        limit: intArg(),
+        offset: intArg(),
       },
-      resolve: async (parent, { searchString, typeCode }, ctx) => {
+      resolve: async (parent, { searchString, typeCode, limit, offset }, ctx) => {
         let data: any = {};
 
-        if (searchString !== '') {
+        if (searchString !== '' || (typeCode === 0 || typeCode === 1)) {
           data = {
             OR: [{ title: { contains: searchString } }, { description: { contains: searchString } }, { authors: { name: { contains: searchString } } },
-            { categories: { name: { contains: searchString } } }, { languages: { name: { contains: searchString } } }]
-
+            { categories: { name: { contains: searchString } } }, { languages: { name: { contains: searchString } } }],
+            type: typeCode ? (typeCode === 0 ? 'rent' : 'sell') : 'rent'
           }
         }
 
         return ctx.prisma.books.findMany({
-          where: { ...data, type: typeCode === 0 ? 'rent' : 'sell' },
+          where: data,
           include: {
             authors: true,
             categories: true,
@@ -43,7 +45,9 @@ export const Query = queryType({
           },
           orderBy: {
             created_at: "desc",
-          }
+          },
+          skip: offset ? offset : 0,
+          take: limit ? limit : 2,
         })
       }
     })
@@ -96,7 +100,7 @@ export const Query = queryType({
     t.list.field('filterBooks', {
       type: 'books',
       args: {
-        searchString: stringArg({ nullable: true }),
+        searchString: stringArg(),
       },
       resolve: (parent, { searchString }, ctx) => {
         return ctx.prisma.$queryRaw`SELECT * FROM books LEFT JOIN languages
@@ -133,43 +137,12 @@ export const Query = queryType({
     t.list.field('getAllOrders', {
       type: 'users',
       nullable: true,
-      resolve: async (parent, args, ctx) => {
-        /**
-        ctx.prisma.users.findMany({
-          include: {
-            orders: {
-              select: {
-                user_id: true, // Pick users where their id is found inside orders table              
-              }
-            }
-          }
-        })
-        */
-
-        const orders = await ctx.prisma.orders.findMany({
-          where: { status: { not: 'closed' } },
-          include: {
-            users: true,
-          }
-        })
-
-        const uniqueUsers: any = {};
-
-        // group by user
-        orders.forEach(order => {
-          if (uniqueUsers[order.user_id]) {
-            uniqueUsers[order.user_id]['orders'].push(order)
-          } else {
-            uniqueUsers[order.user_id] = {
-              ...order.users, 'orders': [order]
-            }
-          }
-        });
-
-        const users = Object.keys(uniqueUsers).map(key => uniqueUsers[key]);
-
-        return users
-      }
+      resolve: async (parent, args, ctx) => ctx.prisma.users.findMany({
+        where: { orders: { some: { status: { not: 'closed' } } } },
+        include: {
+          orders: true
+        }
+      })
     })
 
     t.field('getUserOrdersById', {
