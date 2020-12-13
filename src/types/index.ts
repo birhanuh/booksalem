@@ -1,5 +1,6 @@
 export * from './AuthPayload'
 export * from './Mutation'
+export * from './Subscription'
 export * from './Book'
 export * from './Query'
 export * from './User'

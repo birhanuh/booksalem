@@ -383,6 +383,11 @@ export const Mutation = mutationType({
             },
           })
 
+          // publish the subscription here
+          ctx.pubsub.publish('latestOrder', {
+            latestOrder: order,
+          })
+
           return {
             order
           }
@@ -453,6 +458,11 @@ export const Mutation = mutationType({
               data: {
                 status: orderStatus
               }
+            })
+
+            // publish the subscription here
+            ctx.pubsub.publish('latestOrder', {
+              latestOrder: order,
             })
 
             // After orders.update is successful update books
@@ -531,6 +541,10 @@ export const Mutation = mutationType({
               },
             })
           }
+
+          ctx.pubsub.publish('latestCheckout', {
+            latestCheckout: checkout,
+          })
 
           return {
             checkout
