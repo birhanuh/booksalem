@@ -383,6 +383,11 @@ export const Mutation = mutationType({
             },
           })
 
+          // publish the subscription here
+          ctx.pubsub.publish('latestOrder', {
+            order
+          })
+
           return {
             order
           }
@@ -442,10 +447,16 @@ export const Mutation = mutationType({
               orders: { connect: { id: Number(orderId) } },
               users: { connect: { id: Number(userId) } }
             },
+            include: { orders: true }
           })
 
           // After checkouts.create is successful update orders
           if (checkout) {
+            // publish the subscription here
+            ctx.pubsub.publish('latestCheckout', {
+              checkout
+            })
+
             const order = await ctx.prisma.orders.update({
               where: {
                 id: Number(orderId),
@@ -457,6 +468,11 @@ export const Mutation = mutationType({
 
             // After orders.update is successful update books
             if (order) {
+              // publish the subscription here
+              ctx.pubsub.publish('updatedOrder', {
+                order
+              })
+
               await ctx.prisma.books.update({
                 where: {
                   id: Number(order.book_id),
@@ -531,6 +547,11 @@ export const Mutation = mutationType({
               },
             })
           }
+
+          // publish the subscription here
+          ctx.pubsub.publish('updatedCheckout', {
+            checkout
+          })
 
           return {
             checkout

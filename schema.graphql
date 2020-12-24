@@ -147,6 +147,13 @@ type Query {
   me: users
 }
 
+type Subscription {
+  latestCheckout: CheckoutPayload
+  latestOrder: OrderPayload
+  updatedCheckout: CheckoutPayload
+  updatedOrder: OrderPayload
+}
+
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
 
