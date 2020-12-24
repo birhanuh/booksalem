@@ -3,25 +3,43 @@ import { subscriptionType } from '@nexus/schema'
 export const Subscription = subscriptionType({
   definition(t) {
     t.field('latestOrder', {
-      type: 'orders',
+      type: 'OrderPayload',
       subscribe(_root, _args, ctx) {
         return ctx.pubsub.asyncIterator('latestOrder')
       },
       resolve(payload) {
         return payload
-      },
+      }
+    })
 
+    t.field('updatedOrder', {
+      type: 'OrderPayload',
+      subscribe(_root, _args, ctx) {
+        return ctx.pubsub.asyncIterator('updatedOrder')
+      },
+      resolve: async (payload, _args: any, ctx) => {
+        return payload.id === _args.orderId && payload
+      }
     })
 
     t.field('latestCheckout', {
-      type: 'checkouts',
+      type: 'CheckoutPayload',
       subscribe(_root, _args, ctx) {
         return ctx.pubsub.asyncIterator('latestCheckout')
       },
-      resolve(payload) {
+      resolve: async (payload, _args, ctx) => {
         return payload
-      },
+      }
+    })
 
+    t.field('updatedCheckout', {
+      type: 'CheckoutPayload',
+      subscribe(_root, _args, ctx) {
+        return ctx.pubsub.asyncIterator('updatedCheckout')
+      },
+      resolve: async (payload, _args: any, ctx) => {
+        return payload.id === _args.checkoutId && payload
+      }
     })
   }
 })

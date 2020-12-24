@@ -11,12 +11,14 @@ const prisma = new PrismaClient({
 export interface Context {
   prisma: PrismaClient
   request: any
+  connection: any
   pubsub: any
 }
 
-export function createContext(request: ContextParameters) {
+export function createContext(request: ContextParameters, connection: ContextParameters) {
   return {
     ...request,
+    ...connection,
     prisma,
     pubsub
   }
