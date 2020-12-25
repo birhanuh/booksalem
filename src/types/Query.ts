@@ -12,7 +12,7 @@ export const Query = queryType({
           where: {
             id: Number(userId),
           },
-        })
+        });
       },
     })
 

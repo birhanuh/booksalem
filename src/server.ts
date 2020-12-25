@@ -1,4 +1,4 @@
-import { GraphQLServer } from 'graphql-yoga'
+import { ApolloServer } from 'apollo-server-lambda'
 import * as express from "express";
 import { permissions } from './permissions'
 import { schema } from './schema'
@@ -7,19 +7,23 @@ import { createContext } from './context'
 // env
 require("dotenv").config();
 
-const server = new GraphQLServer({
+const server = new ApolloServer({
   schema,
   context: createContext,
   // middlewares: [permissions],
+  playground: {
+    endpoint: 'dev/graphql'
+  },
+  tracing: true,
+  introspection: true
 })
 
+export const handler = server.createHandler({
+  cors: {
+    origin: '*'
+  }
+})
 
-// Serve static files
-server.express.use("/uploads", express.static("uploads"));
-
-// Start server
-server.start(() =>
-  console.log(
-    `🚀 Http server ready at: http://localhost:4000⭐️\n🚀 WS server ready at: ws://localhost:4000⭐️`
-  ),
+console.log(
+  `🚀 Http server ready at: http://localhost:3000/dev/graphql⭐️\n🚀 WS server ready at: ws://localhost:3000/dev/graphql⭐️`
 )

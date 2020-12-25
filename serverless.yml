@@ -1,0 +1,31 @@
+service: serverless-kemetsehaft-alem
+
+provider: 
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-east-1'}
+  profile: ${opt:profile, 'default'}
+
+functions: 
+  graphql:
+    handler: src/server.handler
+    events:
+      - http: 
+          path: graphql
+          method: post
+          cors: true
+      - http: 
+          path: graphql
+          method: get
+          cors: true
+
+plugins: 
+  - serverless-webpack
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom: 
+  webpack:
+    webpackConfig: webpack.config.js
+    includeModules: true
