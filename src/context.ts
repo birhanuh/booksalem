@@ -15,7 +15,7 @@ export interface Context {
   pubsub: any
 }
 
-export function createContext(request: ContextParameters, connection: ContextParameters) {
+export const createContext: any = (request: ContextParameters, connection: ContextParameters) => {
   return {
     ...request,
     ...connection,

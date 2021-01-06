@@ -1,5 +1,7 @@
+import { File } from "@google-cloud/storage";
 import { createWriteStream } from "fs";
-var gcpStorage = require("@google-cloud/storage");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const gcpStorage = require("@google-cloud/storage");
 
 const storage = new gcpStorage.Storage({
   projectId: process.env.GCP_PROJECT_ID,
@@ -28,7 +30,7 @@ export const processUpload = async (upload: any) => {
   return path;
 };
 
-export const uploadFileToStorage = async (file: any, destination: string) => {
+export const uploadFileToStorage: any = async (file: any, destination: string) => {
   if (!file) {
     return;
   }

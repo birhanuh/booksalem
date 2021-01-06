@@ -10,6 +10,7 @@ export const UploadScalar = scalarType({
     return value
   },
   parseLiteral(ast) {
+    console.log(ast)
     throw new Error('‘Upload’ scalar literal unsupported.')
   },
 })

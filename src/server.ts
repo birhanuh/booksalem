@@ -5,6 +5,7 @@ import { schema } from './schema'
 import { createContext } from './context'
 
 // env
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv").config();
 
 const server = new GraphQLServer({
